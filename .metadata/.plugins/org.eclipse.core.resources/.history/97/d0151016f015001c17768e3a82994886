@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.2.0.final using JasperReports Library version 6.2.0  -->
+<!-- 2021-09-15T11:42:20 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Book" pageWidth="595" pageHeight="842" sectionType="Part" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="30" bottomMargin="30" uuid="d2716064-8ae4-40cf-a575-33afba400e3a">
+	<property name="net.sf.jasperreports.print.create.bookmarks" value="true"/>
+	<property name="com.jaspersoft.studio.book.group.cover.header" value="Cover and Table of Contents"/>
+	<property name="com.jaspersoft.studio.book.group.cover.footer" value="Backcover"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="A0005"/>
+	<parameter name="ROOT_REPORT_PATH" class="java.lang.String"/>
+	<parameter name="WORKPLACE_IDS" class="java.lang.String"/>
+	<parameter name="DATE_MODE" class="java.lang.String"/>
+	<parameter name="DATE_FROM" class="java.lang.String"/>
+	<parameter name="DATE_TO" class="java.lang.String"/>
+	<parameter name="OK_STATUS" class="java.lang.String"/>
+	<parameter name="BBS_STATUS" class="java.lang.String"/>
+	<parameter name="WL_PRINT_STATUS" class="java.lang.String"/>
+	<parameter name="WORK_IDS" class="java.lang.String"/>
+	<parameter name="REPORT_CODE" class="java.lang.String"/>
+	<queryString language="plsql">
+		<![CDATA[SELECT workplaces.column_value as workplace_id
+            , count(works.column_value) as cnt_works
+            , DECODE($P{DATE_MODE},'reg','регистрации','delivery','доставки','взятия') AS DATE_MODE_RUS
+            , TO_DATE($P{DATE_FROM},'yyyy-mm.dd') as DATE_FROM
+            , TO_DATE($P{DATE_TO},'yyyy-mm.dd') as DATE_TO
+  FROM TABLE(p_collections.string_to_table_of_id($P{WORKPLACE_IDS})) workplaces
+            , TABLE(p_collections.string_to_table_of_id($P{WORK_IDS})) works
+            , solution_lab.work w
+ WHERE w.id = works.column_value(+)
+      AND w.workplace_id = workplaces.column_value
+GROUP BY workplaces.column_value]]>
+	</queryString>
+	<field name="WORKPLACE_ID" class="java.lang.String"/>
+	<field name="CNT_WORKS" class="java.lang.Integer"/>
+	<field name="DATE_MODE_RUS" class="java.lang.String"/>
+	<field name="DATE_FROM" class="java.util.Date"/>
+	<field name="DATE_TO" class="java.util.Date"/>
+	<variable name="PRINT_TYPE" class="java.lang.String" resetType="None">
+		<variableExpression><![CDATA[$P{REPORT_CODE}.replaceAll("(.+)(_WRKLIST_PRINT_JASPER_)(.+)","$3")]]></variableExpression>
+	</variable>
+	<group name="cover"/>
+	<detail>
+		<part uuid="04dc64b0-547e-4ed8-8570-5fe4e9749b65">
+			<printWhenExpression><![CDATA[AND(!EQUALS(FIND($V{PRINT_TYPE},"TABLE"),-1), $F{CNT_WORKS} <= 10)]]></printWhenExpression>
+			<p:subreportPart xmlns:p="http://jasperreports.sourceforge.net/jasperreports/parts" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/parts http://jasperreports.sourceforge.net/xsd/parts.xsd">
+				<subreportParameter name="REPORT_CONNECTION">
+					<subreportParameterExpression><![CDATA[$P{REPORT_CONNECTION}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="ROOT_REPORT_PATH">
+					<subreportParameterExpression><![CDATA[$P{ROOT_REPORT_PATH}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="WORKPLACE_ID">
+					<subreportParameterExpression><![CDATA[$F{WORKPLACE_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="WORK_IDS">
+					<subreportParameterExpression><![CDATA[$P{WORK_IDS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_MODE">
+					<subreportParameterExpression><![CDATA[$P{DATE_MODE}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_MODE_RUS">
+					<subreportParameterExpression><![CDATA[$F{DATE_MODE_RUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_FROM">
+					<subreportParameterExpression><![CDATA[$F{DATE_FROM}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_TO">
+					<subreportParameterExpression><![CDATA[$F{DATE_TO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="OK_STATUS">
+					<subreportParameterExpression><![CDATA[$P{OK_STATUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="BBS_STATUS">
+					<subreportParameterExpression><![CDATA[$P{BBS_STATUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="WL_PRINT_STATUS">
+					<subreportParameterExpression><![CDATA[$P{WL_PRINT_STATUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/worklists_table_portrait.jasper"]]></subreportExpression>
+			</p:subreportPart>
+		</part>
+		<part uuid="778e49c4-ca62-45d4-b4d0-1b7a046be3c3">
+			<printWhenExpression><![CDATA[AND(!EQUALS(FIND($V{PRINT_TYPE},"TABLE"),-1), $F{CNT_WORKS} > 10)]]></printWhenExpression>
+			<p:subreportPart xmlns:p="http://jasperreports.sourceforge.net/jasperreports/parts" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/parts http://jasperreports.sourceforge.net/xsd/parts.xsd">
+				<subreportParameter name="REPORT_CONNECTION">
+					<subreportParameterExpression><![CDATA[$P{REPORT_CONNECTION}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="ROOT_REPORT_PATH">
+					<subreportParameterExpression><![CDATA[$P{ROOT_REPORT_PATH}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="WORKPLACE_ID">
+					<subreportParameterExpression><![CDATA[$F{WORKPLACE_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_MODE">
+					<subreportParameterExpression><![CDATA[$P{DATE_MODE}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_FROM">
+					<subreportParameterExpression><![CDATA[$F{DATE_FROM}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_TO">
+					<subreportParameterExpression><![CDATA[$F{DATE_TO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="OK_STATUS">
+					<subreportParameterExpression><![CDATA[$P{OK_STATUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="BBS_STATUS">
+					<subreportParameterExpression><![CDATA[$P{BBS_STATUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="WL_PRINT_STATUS">
+					<subreportParameterExpression><![CDATA[$P{WL_PRINT_STATUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="WORK_IDS">
+					<subreportParameterExpression><![CDATA[$P{WORK_IDS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_MODE_RUS">
+					<subreportParameterExpression><![CDATA[$F{DATE_MODE_RUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/worklists_table_landscape.jasper"]]></subreportExpression>
+			</p:subreportPart>
+		</part>
+		<part uuid="c55deba2-f560-4b1d-a3e4-e732de458077">
+			<printWhenExpression><![CDATA[!EQUALS(FIND($V{PRINT_TYPE},"WORK"),-1)]]></printWhenExpression>
+			<p:subreportPart xmlns:p="http://jasperreports.sourceforge.net/jasperreports/parts" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/parts http://jasperreports.sourceforge.net/xsd/parts.xsd">
+				<subreportParameter name="REPORT_CONNECTION">
+					<subreportParameterExpression><![CDATA[$P{REPORT_CONNECTION}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="ROOT_REPORT_PATH">
+					<subreportParameterExpression><![CDATA[$P{ROOT_REPORT_PATH}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="WORKPLACE_ID">
+					<subreportParameterExpression><![CDATA[$F{WORKPLACE_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_MODE">
+					<subreportParameterExpression><![CDATA[$P{DATE_MODE}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_FROM">
+					<subreportParameterExpression><![CDATA[$F{DATE_FROM}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_TO">
+					<subreportParameterExpression><![CDATA[$F{DATE_TO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="OK_STATUS">
+					<subreportParameterExpression><![CDATA[$P{OK_STATUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="BBS_STATUS">
+					<subreportParameterExpression><![CDATA[$P{BBS_STATUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="WL_PRINT_STATUS">
+					<subreportParameterExpression><![CDATA[$P{WL_PRINT_STATUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="WORK_IDS">
+					<subreportParameterExpression><![CDATA[$P{WORK_IDS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_MODE_RUS">
+					<subreportParameterExpression><![CDATA[$F{DATE_MODE_RUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/worklists_work.jasper"]]></subreportExpression>
+			</p:subreportPart>
+		</part>
+		<part uuid="d6e1a499-8767-4032-9617-a8ead2e61707">
+			<printWhenExpression><![CDATA[!EQUALS(FIND($V{PRINT_TYPE},"LIST"),-1)]]></printWhenExpression>
+			<p:subreportPart xmlns:p="http://jasperreports.sourceforge.net/jasperreports/parts" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/parts http://jasperreports.sourceforge.net/xsd/parts.xsd">
+				<subreportParameter name="REPORT_CONNECTION">
+					<subreportParameterExpression><![CDATA[$P{REPORT_CONNECTION}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="ROOT_REPORT_PATH">
+					<subreportParameterExpression><![CDATA[$P{ROOT_REPORT_PATH}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="WORKPLACE_ID">
+					<subreportParameterExpression><![CDATA[$F{WORKPLACE_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_MODE">
+					<subreportParameterExpression><![CDATA[$P{DATE_MODE}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_FROM">
+					<subreportParameterExpression><![CDATA[$F{DATE_FROM}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_TO">
+					<subreportParameterExpression><![CDATA[$F{DATE_TO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="OK_STATUS">
+					<subreportParameterExpression><![CDATA[$P{OK_STATUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="BBS_STATUS">
+					<subreportParameterExpression><![CDATA[$P{BBS_STATUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="WL_PRINT_STATUS">
+					<subreportParameterExpression><![CDATA[$P{WL_PRINT_STATUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="WORK_IDS">
+					<subreportParameterExpression><![CDATA[$P{WORK_IDS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_MODE_RUS">
+					<subreportParameterExpression><![CDATA[$F{DATE_MODE_RUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/worklists_list.jasper"]]></subreportExpression>
+			</p:subreportPart>
+		</part>
+		<part uuid="d6e1a499-8767-4032-9617-a8ead2e61707">
+			<printWhenExpression><![CDATA[!EQUALS(FIND($V{PRINT_TYPE},"PLATE96"),-1)]]></printWhenExpression>
+			<p:subreportPart xmlns:p="http://jasperreports.sourceforge.net/jasperreports/parts" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/parts http://jasperreports.sourceforge.net/xsd/parts.xsd">
+				<subreportParameter name="REPORT_CONNECTION">
+					<subreportParameterExpression><![CDATA[$P{REPORT_CONNECTION}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="ROOT_REPORT_PATH">
+					<subreportParameterExpression><![CDATA[$P{ROOT_REPORT_PATH}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="WORKPLACE_ID">
+					<subreportParameterExpression><![CDATA[$F{WORKPLACE_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_MODE">
+					<subreportParameterExpression><![CDATA[$P{DATE_MODE}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_FROM">
+					<subreportParameterExpression><![CDATA[$F{DATE_FROM}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_TO">
+					<subreportParameterExpression><![CDATA[$F{DATE_TO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="OK_STATUS">
+					<subreportParameterExpression><![CDATA[$P{OK_STATUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="BBS_STATUS">
+					<subreportParameterExpression><![CDATA[$P{BBS_STATUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="WL_PRINT_STATUS">
+					<subreportParameterExpression><![CDATA[$P{WL_PRINT_STATUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="WORK_IDS">
+					<subreportParameterExpression><![CDATA[$P{WORK_IDS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_MODE_RUS">
+					<subreportParameterExpression><![CDATA[$F{DATE_MODE_RUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/worklists_plate96.jasper"]]></subreportExpression>
+			</p:subreportPart>
+		</part>
+		<part uuid="07fde23a-5182-4bb8-8581-3919fafb5ec7">
+			<printWhenExpression><![CDATA[!EQUALS(FIND($V{PRINT_TYPE},"BIOM"),-1)]]></printWhenExpression>
+			<p:subreportPart xmlns:p="http://jasperreports.sourceforge.net/jasperreports/parts" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/parts http://jasperreports.sourceforge.net/xsd/parts.xsd">
+				<subreportParameter name="REPORT_CONNECTION">
+					<subreportParameterExpression><![CDATA[$P{REPORT_CONNECTION}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="ROOT_REPORT_PATH">
+					<subreportParameterExpression><![CDATA[$P{ROOT_REPORT_PATH}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="WORKPLACE_ID">
+					<subreportParameterExpression><![CDATA[$F{WORKPLACE_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_MODE">
+					<subreportParameterExpression><![CDATA[$P{DATE_MODE}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_FROM">
+					<subreportParameterExpression><![CDATA[$F{DATE_FROM}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_TO">
+					<subreportParameterExpression><![CDATA[$F{DATE_TO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="OK_STATUS">
+					<subreportParameterExpression><![CDATA[$P{OK_STATUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="BBS_STATUS">
+					<subreportParameterExpression><![CDATA[$P{BBS_STATUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="WL_PRINT_STATUS">
+					<subreportParameterExpression><![CDATA[$P{WL_PRINT_STATUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="WORK_IDS">
+					<subreportParameterExpression><![CDATA[$P{WORK_IDS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_MODE_RUS">
+					<subreportParameterExpression><![CDATA[$F{DATE_MODE_RUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/worklists_biom.jasper"]]></subreportExpression>
+			</p:subreportPart>
+		</part>
+		<part uuid="7d225156-9a45-4716-8d30-2abc4a1d9cff">
+			<printWhenExpression><![CDATA[!EQUALS(FIND($V{PRINT_TYPE},"BARCODE"),-1)]]></printWhenExpression>
+			<p:subreportPart xmlns:p="http://jasperreports.sourceforge.net/jasperreports/parts" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/parts http://jasperreports.sourceforge.net/xsd/parts.xsd">
+				<subreportParameter name="REPORT_CONNECTION">
+					<subreportParameterExpression><![CDATA[$P{REPORT_CONNECTION}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="ROOT_REPORT_PATH">
+					<subreportParameterExpression><![CDATA[$P{ROOT_REPORT_PATH}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="WORKPLACE_ID">
+					<subreportParameterExpression><![CDATA[$F{WORKPLACE_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_MODE">
+					<subreportParameterExpression><![CDATA[$P{DATE_MODE}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_FROM">
+					<subreportParameterExpression><![CDATA[$F{DATE_FROM}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_TO">
+					<subreportParameterExpression><![CDATA[$F{DATE_TO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="OK_STATUS">
+					<subreportParameterExpression><![CDATA[$P{OK_STATUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="BBS_STATUS">
+					<subreportParameterExpression><![CDATA[$P{BBS_STATUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="WL_PRINT_STATUS">
+					<subreportParameterExpression><![CDATA[$P{WL_PRINT_STATUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="WORK_IDS">
+					<subreportParameterExpression><![CDATA[$P{WORK_IDS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_MODE_RUS">
+					<subreportParameterExpression><![CDATA[$F{DATE_MODE_RUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/worklists_list_barcode.jasper"]]></subreportExpression>
+			</p:subreportPart>
+		</part>
+		<part uuid="96b1c63e-10ec-485c-8040-a304627ffbb0">
+			<printWhenExpression><![CDATA[!EQUALS(FIND($V{PRINT_TYPE},"PATIENT"),-1)]]></printWhenExpression>
+			<p:subreportPart xmlns:p="http://jasperreports.sourceforge.net/jasperreports/parts" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/parts http://jasperreports.sourceforge.net/xsd/parts.xsd">
+				<subreportParameter name="REPORT_CONNECTION">
+					<subreportParameterExpression><![CDATA[$P{REPORT_CONNECTION}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="ROOT_REPORT_PATH">
+					<subreportParameterExpression><![CDATA[$P{ROOT_REPORT_PATH}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="WORKPLACE_ID">
+					<subreportParameterExpression><![CDATA[$F{WORKPLACE_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_MODE">
+					<subreportParameterExpression><![CDATA[$P{DATE_MODE}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_FROM">
+					<subreportParameterExpression><![CDATA[$F{DATE_FROM}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_TO">
+					<subreportParameterExpression><![CDATA[$F{DATE_TO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="OK_STATUS">
+					<subreportParameterExpression><![CDATA[$P{OK_STATUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="BBS_STATUS">
+					<subreportParameterExpression><![CDATA[$P{BBS_STATUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="WL_PRINT_STATUS">
+					<subreportParameterExpression><![CDATA[$P{WL_PRINT_STATUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="WORK_IDS">
+					<subreportParameterExpression><![CDATA[$P{WORK_IDS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DATE_MODE_RUS">
+					<subreportParameterExpression><![CDATA[$F{DATE_MODE_RUS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/worklists_biom_patient.jasper"]]></subreportExpression>
+			</p:subreportPart>
+		</part>
+	</detail>
+</jasperReport>

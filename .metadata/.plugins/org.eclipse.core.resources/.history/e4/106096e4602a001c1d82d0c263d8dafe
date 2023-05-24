@@ -1,0 +1,573 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.2.0.final using JasperReports Library version 6.2.0  -->
+<!-- 2021-10-11T11:56:16 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="results" pageWidth="550" pageHeight="792" whenNoDataType="NoDataSection" columnWidth="550" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="5fd1c3b3-6a59-4f41-aca0-870a05732b35">
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<subDataset name="IMAGES" uuid="c76263fa-28b4-4657-ae01-383c7ce80eaa">
+		<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+		<parameter name="IMAGES" class="java.lang.String"/>
+		<queryString language="plsql">
+			<![CDATA[WITH tab AS
+ (SELECT rownum rn
+               ,column_value
+    FROM TABLE(p_collections.string_to_table_of_id($P{IMAGES})))
+select wr.text as name
+           ,image as data
+  FROM solution_data.lab_result_image l
+      ,solution_lab.result_value rv
+      ,solution_lab.workresult_value wrv
+      ,solution_lab.workresult wr
+      ,tab t
+ where l.id = t.column_value
+   and rv.id = l.result_value_id
+   and wrv.id = rv.workresult_value_id
+   and wr.id = wrv.workresult_id
+order by rn]]>
+		</queryString>
+		<field name="NAME" class="java.lang.String"/>
+		<field name="DATA" class="java.awt.Image"/>
+	</subDataset>
+	<parameter name="RESEARCH_ID" class="java.lang.String"/>
+	<parameter name="ROOT_REPORT_PATH" class="java.lang.String"/>
+	<queryString language="plsql">
+		<![CDATA[SELECT t.res_display_order
+      --,t.wrtitle
+      ,(CASE WHEN lower(t.wrtitle) like '%пцр%' then 'Research by PCR method'
+             ELSE trim(FN_GET_TRANSLIT(nvl(t.wrtitle,' '))) END) as wrtitle
+      ,t.pat_status
+      --,t.pokazatel
+      ,(CASE /*A0075*/ WHEN lower(t.pokazatel) like '%рнк%sars-cov-2%' THEN 'RNA of coronavirus SARS-CoV-2'
+             /*A0167*/ WHEN lower(t.pokazatel) like '%днк%sars-cov-2%' THEN 'RNA of coronavirus SARS-CoV-2'
+             /*A00296*/ WHEN lower(t.pokazatel) like '%SARS%' THEN 'RNA of coronavirus SARS-CoV-2'
+             ELSE FN_GET_TRANSLIT(t.pokazatel) END) as pokazatel
+      --,t.VALUE
+      ,(CASE /*A0075*/ WHEN lower(t.VALUE) like chr(39) || 'не обнаружен%' THEN chr(39) || 'Negative'
+             /*A0075*/ WHEN lower(t.VALUE) like chr(39) || 'обнаружен%' THEN chr(39) || 'POSITIVE' 
+      		 /*A0167*/ WHEN lower(t.VALUE) like chr(39) || 'положительн%' THEN chr(39) || 'DETECTED'
+      		 /*A0167*/ WHEN lower(t.VALUE) like chr(39) || 'отрицательн%' THEN chr(39) || 'Not detected'
+      		 ELSE FN_GET_TRANSLIT(t.VALUE) END) as VALUE
+      --,t.unit
+      ,FN_GET_TRANSLIT(t.unit) as unit
+      --,t.norm_text
+      ,(CASE /*A0075*/ WHEN lower(t.norm_text) like '%не обнаружен%' THEN 'Negative'
+             /*A0075*/ WHEN lower(t.norm_text) like '%обнаружен%' THEN 'POSITIVE'
+             /*A0167*/ WHEN lower(t.norm_text) like '%отрицательн%' THEN 'Not detected'
+             WHEN lower(t.norm_text) like '%положительн%' THEN 'POSITIVE'
+             ELSE FN_GET_TRANSLIT(t.norm_text) END) as norm_text
+      --,t.norm_note
+      ,(CASE WHEN lower(t.norm_note) like 'аналитич%чувствит%' THEN 'Alalytycal specifyty :5х10*2 copies/ml. Manufacturing: Dna-Technology'
+      	     ELSE FN_GET_TRANSLIT(t.norm_note) END) as norm_note
+      --,t.result_note
+      ,FN_GET_TRANSLIT(t.result_note) as result_note
+      ,t.form_result_id
+      ,t.resultdate
+      ,t.workplace_code
+      ,t.equip_code
+      --,(select fn_man_short_by_id(rv.executor_id) from solution_lab.result_value rv where rv.id = t.result_value_id) as executor
+      ,FN_GET_TRANSLIT((select fn_man_short_by_id(rv.executor_id) from solution_lab.result_value rv where rv.id = t.result_value_id)) as executor
+      --,(select fn_man_short_by_id(rv.verifier_id) from solution_lab.result_value rv where rv.id = t.result_value_id) as verifier
+      ,FN_GET_TRANSLIT((select fn_man_short_by_id(rv.verifier_id) from solution_lab.result_value rv where rv.id = t.result_value_id)) as verifier
+      ,(select id from solution_data.lab_result_image where result_value_id = t.result_value_id) as image_id
+      ,(select id from solution_data.documents where link_id = t.result_value_id) as doc_id
+  FROM TABLE(p_lab.get_results_for_out($P{RESEARCH_ID}, 5)) t
+ ORDER BY res_display_order
+         ,display_order]]>
+	</queryString>
+	<field name="PAT_STATUS" class="java.lang.String"/>
+	<field name="POKAZATEL" class="java.lang.String"/>
+	<field name="VALUE" class="java.lang.String"/>
+	<field name="UNIT" class="java.lang.String"/>
+	<field name="NORM_TEXT" class="java.lang.String"/>
+	<field name="WRTITLE" class="java.lang.String"/>
+	<field name="NORM_NOTE" class="java.lang.String"/>
+	<field name="RESULT_NOTE" class="java.lang.String"/>
+	<field name="FORM_RESULT_ID" class="java.lang.String"/>
+	<field name="EXECUTOR" class="java.lang.String"/>
+	<field name="VERIFIER" class="java.lang.String"/>
+	<field name="IMAGE_ID" class="java.lang.String"/>
+	<field name="DOC_ID" class="java.lang.String"/>
+	<variable name="VALUE" class="java.lang.String">
+		<variableExpression><![CDATA["<pre>" + org.apache.commons.lang.StringEscapeUtils.escapeHtml(REPLACE($F{VALUE},1,1,"")).replaceAll("(\\d+)(\\^)(\\d{1,2},\\d{1,2}|\\d{1,2}\\.\\d{1,2}|\\d{1,2})","$1<sup>$3</sup>") + "</pre>"]]></variableExpression>
+	</variable>
+	<variable name="UNIT" class="java.lang.String">
+		<variableExpression><![CDATA["<pre>" + org.apache.commons.lang.StringEscapeUtils.escapeHtml(TRIM($F{UNIT})).replaceAll("(\\d+)(\\^)(\\d{1,2})","$1<sup>$3</sup>") + "</pre>"]]></variableExpression>
+	</variable>
+	<variable name="NORM_TEXT" class="java.lang.String">
+		<variableExpression><![CDATA["<pre>" + org.apache.commons.lang.StringEscapeUtils.escapeHtml(TRIM($F{NORM_TEXT})).replaceAll("(\\d+)(\\^)(\\d{1,2})","$1<sup>$3</sup>") + "</pre>"]]></variableExpression>
+	</variable>
+	<variable name="NORM_NOTE" class="java.lang.String">
+		<variableExpression><![CDATA["<pre>" + org.apache.commons.lang.StringEscapeUtils.escapeHtml($F{NORM_NOTE}).replaceAll("(\\d+)(\\^)(\\d{1,2})","$1<sup>$3</sup>") + "</pre>"]]></variableExpression>
+	</variable>
+	<variable name="NORM" class="java.lang.String">
+		<variableExpression><![CDATA[!EQUALS($V{NORM_TEXT}, "") ? (!EQUALS($V{NORM_NOTE}, "") ? $V{NORM_TEXT} + "<br>" + $V{NORM_NOTE}
+	: $V{NORM_TEXT}
+) : $V{NORM_NOTE}]]></variableExpression>
+	</variable>
+	<variable name="RESULT_NOTE" class="java.lang.String">
+		<variableExpression><![CDATA["<pre>" + org.apache.commons.lang.StringEscapeUtils.escapeHtml($F{RESULT_NOTE}).replaceAll("(\\d+)(\\^)(\\d{1,2})","$1<sup>$3</sup>") + "</pre>"]]></variableExpression>
+	</variable>
+	<variable name="VERIFIERS" class="java.lang.String">
+		<variableExpression><![CDATA[$V{VERIFIERS} == null ? $F{VERIFIER} 
+: $V{VERIFIERS}  + ($F{VERIFIER} == null ? "" : ", " + $F{VERIFIER})]]></variableExpression>
+	</variable>
+	<variable name="EXECUTORS" class="java.lang.String">
+		<variableExpression><![CDATA[$V{EXECUTORS} == null ? $F{EXECUTOR} 
+: $V{EXECUTORS}  + ($F{EXECUTOR} == null ? "" : ", " + $F{EXECUTOR})]]></variableExpression>
+	</variable>
+	<variable name="IMAGES" class="java.lang.String">
+		<variableExpression><![CDATA[$V{IMAGES} == null ? $F{IMAGE_ID}
+: $V{IMAGES} + ($F{IMAGE_ID} == null ? "" : ", " + $F{IMAGE_ID})]]></variableExpression>
+	</variable>
+	<variable name="DOCS" class="java.lang.String">
+		<variableExpression><![CDATA[$V{DOCS} == null ? $F{DOC_ID}
+: $V{DOCS}  + ($F{DOC_ID} == null ? "" : ", " + $F{DOC_ID})]]></variableExpression>
+	</variable>
+	<variable name="EVERIFIERS" class="java.lang.String" incrementType="Report">
+		<variableExpression><![CDATA[$V{EXECUTORS} == null ? $V{VERIFIERS}	: $V{EXECUTORS} + ($V{VERIFIERS} == null ? "" : ", " + $V{VERIFIERS})]]></variableExpression>
+	</variable>
+	<variable name="EVERIFIERS_DISTINCT" class="java.lang.String" incrementType="Report">
+		<variableExpression><![CDATA[Arrays.toString(new ArrayList(new HashSet(Arrays.asList($V{EVERIFIERS}.split(", ")))).toArray()).replaceAll("(^\\[)(.*)(\\]$)", "$2")]]></variableExpression>
+	</variable>
+	<variable name="STRING_FOR_QR" class="java.lang.String">
+		<variableExpression><![CDATA[" Test: " + $F{POKAZATEL} + " Result: " + REPLACE($F{VALUE},1,1,"")]]></variableExpression>
+	</variable>
+	<group name="WRTITLE" minHeightToStartNewPage="36">
+		<groupExpression><![CDATA[$F{WRTITLE}]]></groupExpression>
+		<groupHeader>
+			<band height="14" splitType="Prevent">
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement key="" x="0" y="0" width="550" height="14" isRemoveLineWhenBlank="true" isPrintInFirstWholeBand="true" uuid="9f114bf8-f50d-402d-bc33-5275f946eb38"/>
+					<box>
+						<leftPen lineWidth="0.6"/>
+						<rightPen lineWidth="0.6"/>
+					</box>
+					<textElement textAlignment="Center" verticalAlignment="Middle" markup="none">
+						<font fontName="DejaVu Sans" size="10" isBold="true" isItalic="true" isUnderline="false"/>
+					</textElement>
+					<textFieldExpression><![CDATA[SUBSTITUTE($F{WRTITLE},"|",CHAR(10))]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band>
+				<frame>
+					<reportElement mode="Transparent" x="0" y="0" width="550" height="0" uuid="f54dc785-8df7-4f1f-a9dd-a1b4517e896d">
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<box>
+						<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+				</frame>
+			</band>
+		</groupFooter>
+	</group>
+	<group name="POKAZATEL" keepTogether="true">
+		<groupExpression><![CDATA[$F{POKAZATEL}]]></groupExpression>
+		<groupHeader>
+			<band>
+				<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band>
+				<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				<frame borderSplitType="DrawBorders">
+					<reportElement mode="Transparent" x="0" y="0" width="550" height="0" uuid="1ea0722c-cc96-4385-83fa-c895101ef36f">
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<box>
+						<topPen lineWidth="0.2" lineStyle="Solid" lineColor="#A0A0A0"/>
+						<leftPen lineWidth="0.2" lineStyle="Solid" lineColor="#A0A0A0"/>
+						<bottomPen lineWidth="0.2" lineStyle="Solid" lineColor="#A0A0A0"/>
+						<rightPen lineWidth="0.2" lineStyle="Solid" lineColor="#A0A0A0"/>
+					</box>
+				</frame>
+			</band>
+		</groupFooter>
+	</group>
+	<pageHeader>
+		<band height="10">
+			<staticText>
+				<reportElement positionType="Float" x="0" y="0" width="210" height="10" isRemoveLineWhenBlank="true" isPrintInFirstWholeBand="true" uuid="52de2286-aaa4-4628-af00-68a945a85a3e"/>
+				<box padding="0" topPadding="0" leftPadding="5" bottomPadding="0" rightPadding="5">
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Tests]]></text>
+			</staticText>
+			<staticText>
+				<reportElement positionType="Float" x="210" y="0" width="130" height="10" isRemoveLineWhenBlank="true" isPrintInFirstWholeBand="true" uuid="26cd5baf-94e9-4b18-878e-53c8d6753eb2"/>
+				<box padding="0" topPadding="0" leftPadding="5" bottomPadding="0" rightPadding="5">
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Result]]></text>
+			</staticText>
+			<staticText>
+				<reportElement positionType="Float" x="340" y="0" width="65" height="10" isRemoveLineWhenBlank="true" isPrintInFirstWholeBand="true" uuid="20dffd5b-a429-43e0-8429-4290ce014ae2"/>
+				<box padding="0" topPadding="0" leftPadding="5" bottomPadding="0" rightPadding="5">
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Units]]></text>
+			</staticText>
+			<staticText>
+				<reportElement positionType="Float" x="405" y="0" width="145" height="10" isRemoveLineWhenBlank="true" isPrintInFirstWholeBand="true" uuid="119c7ebe-e436-4af1-aa88-80efcde7d753"/>
+				<box padding="0" topPadding="0" leftPadding="5" bottomPadding="0" rightPadding="5">
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Reference interval]]></text>
+			</staticText>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="12" splitType="Prevent">
+			<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<frame>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" mode="Transparent" x="0" y="0" width="550" height="12" isRemoveLineWhenBlank="true" isPrintInFirstWholeBand="true" uuid="bb14198a-ea76-4060-a2c7-c9b663f549a3">
+					<property name="ShowOutOfBoundContent" value="false"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{FORM_RESULT_ID} == null]]></printWhenExpression>
+				</reportElement>
+				<box topPadding="0" bottomPadding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<frame>
+					<reportElement positionType="Float" stretchType="RelativeToTallestObject" mode="Transparent" x="0" y="1" width="550" height="11" isRemoveLineWhenBlank="true" backcolor="#FFCCCC" uuid="8982bf71-a4bd-4b55-a9e2-883625b81888">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<printWhenExpression><![CDATA[!EQUALS($F{PAT_STATUS}," ")]]></printWhenExpression>
+					</reportElement>
+				</frame>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement key="" positionType="Float" isPrintRepeatedValues="false" mode="Transparent" x="0" y="0" width="180" height="12" isRemoveLineWhenBlank="true" uuid="cdf6bc22-bf1f-4251-9fd4-c2a10900d6f7"/>
+					<box padding="0" leftPadding="1" rightPadding="1">
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement verticalAlignment="Middle" markup="none">
+						<font fontName="DejaVu Sans" size="9" isBold="false"/>
+						<paragraph lineSpacing="Single" leftIndent="3" rightIndent="3"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{POKAZATEL}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement positionType="Float" mode="Transparent" x="180" y="0" width="30" height="12" isRemoveLineWhenBlank="true" forecolor="#FF0000" uuid="9cd63749-d1d4-4a63-9b1e-38458d3890a4">
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<printWhenExpression><![CDATA[AND(!EQUALS(LEFT($F{PAT_STATUS}),">"),!EQUALS(RIGHT($F{PAT_STATUS}),"<"))]]></printWhenExpression>
+					</reportElement>
+					<box leftPadding="1"/>
+					<textElement textAlignment="Center" verticalAlignment="Top">
+						<font fontName="DejaVu Sans" size="10"/>
+						<paragraph lineSpacing="Single" leftIndent="0" rightIndent="0"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{PAT_STATUS}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement positionType="Float" mode="Transparent" x="180" y="0" width="30" height="12" isRemoveLineWhenBlank="true" forecolor="#0066FF" uuid="fad7f664-f303-49e9-85dc-5f31814e9986">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<printWhenExpression><![CDATA[1 == 1]]></printWhenExpression>
+					</reportElement>
+					<box leftPadding="1"/>
+					<textElement textAlignment="Center" verticalAlignment="Top">
+						<font fontName="DejaVu Sans" size="10"/>
+						<paragraph lineSpacing="Single" leftIndent="0" rightIndent="0"/>
+					</textElement>
+					<textFieldExpression><![CDATA[EQUALS(RIGHT($F{PAT_STATUS}),"<") ? "↓" : ""]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement positionType="Float" mode="Transparent" x="180" y="0" width="30" height="12" isRemoveLineWhenBlank="true" forecolor="#FF0000" uuid="eb035f9e-6733-46e9-a932-e4312e628d1f">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<printWhenExpression><![CDATA[1 == 1]]></printWhenExpression>
+					</reportElement>
+					<box leftPadding="1"/>
+					<textElement textAlignment="Center" verticalAlignment="Top">
+						<font fontName="DejaVu Sans" size="10"/>
+						<paragraph lineSpacing="Single" leftIndent="0" rightIndent="0"/>
+					</textElement>
+					<textFieldExpression><![CDATA[EQUALS(LEFT($F{PAT_STATUS}),">") ? "↑" : ""]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement positionType="Float" mode="Transparent" x="210" y="0" width="130" height="12" isRemoveLineWhenBlank="true" uuid="18051776-e5d1-4e3e-aaf4-4c43d0886b24">
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<printWhenExpression><![CDATA[OR(
+    LEN($F{VALUE}) <= 20,
+	!EQUALS($F{UNIT}," ")
+)]]></printWhenExpression>
+					</reportElement>
+					<box padding="0" leftPadding="1" rightPadding="1">
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle" markup="html">
+						<font fontName="DejaVu Sans" size="9"/>
+						<paragraph lineSpacing="Single" lineSpacingSize="1.0" leftIndent="3" rightIndent="3"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{VALUE}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement positionType="Float" mode="Transparent" x="210" y="0" width="195" height="12" isRemoveLineWhenBlank="true" uuid="f9b1edcd-b510-482a-9260-796b793bc41a">
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<printWhenExpression><![CDATA[AND(
+	LEN($F{VALUE}) > 20,
+	EQUALS($F{UNIT}," "),
+    !EQUALS($F{NORM_TEXT}+$F{NORM_NOTE}, "  ")
+)]]></printWhenExpression>
+					</reportElement>
+					<box padding="0" leftPadding="1" rightPadding="1">
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement textAlignment="Left" verticalAlignment="Middle" markup="html">
+						<font fontName="DejaVu Sans" size="9"/>
+						<paragraph lineSpacing="Single" lineSpacingSize="1.0" leftIndent="3" rightIndent="3"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{VALUE}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement positionType="Float" mode="Transparent" x="210" y="0" width="340" height="12" isRemoveLineWhenBlank="true" uuid="6ad522f4-be15-47a2-83a2-505296b36ca7">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<printWhenExpression><![CDATA[AND(
+	LEN($F{VALUE}) > 20,
+	EQUALS($F{UNIT}," "),
+	EQUALS($F{NORM_TEXT}+$F{NORM_NOTE}, "  ")
+)]]></printWhenExpression>
+					</reportElement>
+					<box padding="0" leftPadding="1" rightPadding="1">
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement textAlignment="Left" verticalAlignment="Middle" markup="html">
+						<font fontName="DejaVu Sans" size="9"/>
+						<paragraph lineSpacing="Single" lineSpacingSize="1.0" leftIndent="3" rightIndent="3"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{VALUE}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement positionType="Float" mode="Transparent" x="340" y="0" width="65" height="12" isRemoveLineWhenBlank="true" uuid="6f3178bc-4664-4bb0-bcbd-06df3c53731a">
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<box padding="0" leftPadding="1" rightPadding="1">
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement verticalAlignment="Middle" markup="html">
+						<font fontName="DejaVu Sans" size="9"/>
+						<paragraph lineSpacing="Single" leftIndent="3" rightIndent="3"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{UNIT}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement mode="Transparent" x="405" y="0" width="145" height="12" isRemoveLineWhenBlank="true" uuid="ac44fafd-61df-460c-bfe5-7d6858d81f1c">
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<box padding="0" leftPadding="1" rightPadding="1">
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement verticalAlignment="Middle" markup="html">
+						<font fontName="DejaVu Sans" size="9"/>
+						<paragraph lineSpacing="Single" leftIndent="3" rightIndent="3"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{NORM_TEXT}]]></textFieldExpression>
+				</textField>
+			</frame>
+		</band>
+		<band height="12" splitType="Prevent">
+			<printWhenExpression><![CDATA[!EQUALS($F{NORM_NOTE}," ")]]></printWhenExpression>
+			<frame>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="0" y="0" width="550" height="12" isRemoveLineWhenBlank="true" uuid="c768f16a-5ae7-459a-9e00-47ec1d4fda44">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{FORM_RESULT_ID} == null]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<leftPen lineWidth="0.6"/>
+					<rightPen lineWidth="0.6"/>
+				</box>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement positionType="Float" mode="Transparent" x="210" y="0" width="340" height="12" isRemoveLineWhenBlank="true" uuid="72dff779-3f2c-4f50-bcac-c238d21d747d">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<box padding="1" leftPadding="1" rightPadding="1">
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement verticalAlignment="Middle" markup="html">
+						<font fontName="DejaVu Sans" size="8"/>
+						<paragraph lineSpacing="Single" leftIndent="3" rightIndent="3"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{NORM_NOTE}]]></textFieldExpression>
+				</textField>
+			</frame>
+		</band>
+		<band height="12" splitType="Prevent">
+			<printWhenExpression><![CDATA[$F{FORM_RESULT_ID} != null]]></printWhenExpression>
+			<frame>
+				<reportElement positionType="Float" x="0" y="0" width="550" height="12" isRemoveLineWhenBlank="true" uuid="832bcd13-b778-483c-9999-a49c0c862b07">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement key="" isPrintRepeatedValues="false" mode="Transparent" x="0" y="0" width="550" height="12" isRemoveLineWhenBlank="true" uuid="8fa4bf7b-7e46-4dee-b39d-48b1a26cc8a1"/>
+					<box padding="0" leftPadding="1" rightPadding="1">
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement verticalAlignment="Middle" markup="none">
+						<font fontName="DejaVu Sans" size="9" isBold="true" isItalic="true"/>
+						<paragraph lineSpacing="Single" leftIndent="13" rightIndent="3"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{POKAZATEL}]]></textFieldExpression>
+				</textField>
+				<subreport>
+					<reportElement positionType="Float" x="0" y="12" width="550" height="0" isRemoveLineWhenBlank="true" uuid="79de0215-86b8-4f8d-9893-7de0b9c5ee33">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<subreportParameter name="FORM_RESULT_ID">
+						<subreportParameterExpression><![CDATA[$F{FORM_RESULT_ID}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/results_protocols.jasper"]]></subreportExpression>
+				</subreport>
+			</frame>
+		</band>
+		<band height="12" splitType="Prevent">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<printWhenExpression><![CDATA[!EQUALS($F{RESULT_NOTE}," ")]]></printWhenExpression>
+			<frame>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="0" y="0" width="550" height="12" isRemoveLineWhenBlank="true" uuid="c16b17e6-013a-47fa-b147-bc72935083b3"/>
+				<box>
+					<leftPen lineWidth="0.6"/>
+					<rightPen lineWidth="0.6"/>
+				</box>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement key="" positionType="Float" mode="Transparent" x="211" y="0" width="339" height="12" isRemoveLineWhenBlank="true" uuid="eb2639e3-93c0-4c86-923f-bcae8774d6e0">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Left" verticalAlignment="Middle" markup="html">
+						<font fontName="DejaVu Sans" size="8"/>
+						<paragraph leftIndent="3" rightIndent="3"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{RESULT_NOTE}]]></textFieldExpression>
+				</textField>
+			</frame>
+		</band>
+	</detail>
+	<summary>
+		<band height="550">
+			<printWhenExpression><![CDATA[$V{IMAGES} != null]]></printWhenExpression>
+			<componentElement>
+				<reportElement x="0" y="0" width="550" height="550" uuid="40eb68d8-3c4f-4f77-9317-27baaf394a3a">
+					<property name="net.sf.jasperreports.export.headertoolbar.table.name" value="IMAGES"/>
+				</reportElement>
+				<jr:list xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" printOrder="Vertical">
+					<datasetRun subDataset="IMAGES" uuid="6dfeb5d2-24f0-4cd1-972e-b5f561b7eb7d">
+						<datasetParameter name="ORACLE_REF_CURSOR">
+							<datasetParameterExpression><![CDATA[$P{ORACLE_REF_CURSOR}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="IMAGES">
+							<datasetParameterExpression><![CDATA[$V{IMAGES}]]></datasetParameterExpression>
+						</datasetParameter>
+						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					</datasetRun>
+					<jr:listContents height="550" width="550">
+						<image>
+							<reportElement x="0" y="14" width="550" height="536" uuid="8a195c72-569f-4ce6-8e8f-9f255cf2e01d"/>
+							<imageExpression><![CDATA[$F{DATA}]]></imageExpression>
+						</image>
+						<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+							<reportElement key="" x="0" y="0" width="550" height="14" isRemoveLineWhenBlank="true" isPrintInFirstWholeBand="true" uuid="53974128-3d69-47da-8e76-74fc5814f325"/>
+							<textElement textAlignment="Center" verticalAlignment="Middle" markup="html">
+								<font fontName="DejaVu Sans" size="10" isBold="true" isItalic="true" isUnderline="false"/>
+							</textElement>
+							<textFieldExpression><![CDATA[$F{NAME}]]></textFieldExpression>
+						</textField>
+					</jr:listContents>
+				</jr:list>
+			</componentElement>
+		</band>
+	</summary>
+	<noData>
+		<band>
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<subreport overflowType="Stretch">
+				<reportElement x="0" y="0" width="550" height="0" isRemoveLineWhenBlank="true" isPrintInFirstWholeBand="true" uuid="491f7ada-ad6a-485c-8d94-de0ddfcb36e1"/>
+				<subreportParameter name="RESEARCH_ID">
+					<subreportParameterExpression><![CDATA[$P{RESEARCH_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<returnValue subreportVariable="EXECUTORS" toVariable="EXECUTORS"/>
+				<returnValue subreportVariable="VERIFIERS" toVariable="VERIFIERS"/>
+				<returnValue subreportVariable="EVERIFIERS_DISTINCT" toVariable="EVERIFIERS_DISTINCT"/>
+				<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH}+"/results_mbio.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</noData>
+</jasperReport>

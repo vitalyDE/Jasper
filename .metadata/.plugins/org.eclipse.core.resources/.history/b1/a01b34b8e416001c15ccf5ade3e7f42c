@@ -1,0 +1,418 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.2.0.final using JasperReports Library version 6.2.0  -->
+<!-- 2021-06-16T14:01:26 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="main" pageWidth="595" pageHeight="842" columnWidth="550" leftMargin="25" rightMargin="20" topMargin="15" bottomMargin="15" uuid="55f2a5fb-b675-4a67-bb7c-c6e13794d7dc">
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<style name="Table_TH" mode="Opaque" backcolor="#F0F8FF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table_TD" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table_CH" mode="Opaque" backcolor="#BFE1FF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<parameter name="RESEARCH_ID" class="java.lang.String"/>
+	<parameter name="ROOT_REPORT_PATH" class="java.lang.String"/>
+	<parameter name="PRINT_STAMPS" class="java.lang.String">
+		<parameterDescription><![CDATA[Печать факсимиле, штампов]]></parameterDescription>
+	</parameter>
+	<parameter name="USER_ID" class="java.lang.String"/>
+	<queryString language="plsql">
+		<![CDATA[WITH tab AS
+ (SELECT rownum rn
+               ,column_value
+    FROM TABLE(p_collections.string_to_table_of_id($P{RESEARCH_ID})))
+SELECT DISTINCT
+              /* (select nvl(nvl(printtext,text),'Клинико-диагностическая лаборатория') 
+                FROM V_THIS_LPU_DATA) as lpu */
+             (case when (select count(distinct trim(llu.text_ukr)) from V_LAB_RESEARCH_WORKPLACE v, solution_lab.lu llu where v.research_id = r.id and llu.id = v.PLACE_ID ) = 1
+                   then (select distinct trim(llu.text_ukr) from V_LAB_RESEARCH_WORKPLACE v, solution_lab.lu llu where v.research_id = r.id and llu.id = v.PLACE_ID )
+                   else 'Отделение лабораторной диагностики'
+              end) as lpu                
+             ,r.patient_id
+             ,r.root_id as research_id
+             ,r.id AS specimen_id
+             ,substr(r.ids, 1, 1) AS lab
+             ,t.rn
+             ,MIN(t.rn) over(PARTITION BY r.patient_id ORDER BY t.rn) AS pat_grp_rn
+             ,MIN(t.rn) over(PARTITION BY r.root_id ORDER BY t.rn) AS root_grp_rn
+,fn_man_short_by_id($P{USER_ID}) as man
+  FROM solution_lab.research r
+             ,tab                   t
+ WHERE (r.root_id = column_value OR (r.id = column_value AND r.root_id IS NOT NULL))
+      AND r.print_status > 0
+ ORDER BY pat_grp_rn, root_grp_rn, rn]]>
+	</queryString>
+	<field name="LPU" class="java.lang.String"/>
+	<field name="LAB" class="java.lang.String"/>
+	<field name="PATIENT_ID" class="java.lang.String"/>
+	<field name="RESEARCH_ID" class="java.lang.String"/>
+	<field name="SPECIMEN_ID" class="java.lang.String"/>
+	<field name="MAN" class="java.lang.String"/>
+	<variable name="CURRENT_DATE" class="java.lang.String">
+		<variableExpression><![CDATA[new SimpleDateFormat("dd.MM.yyyy HH:mm:ss").format(new java.util.Date())]]></variableExpression>
+	</variable>
+	<variable name="CURRENT_PAGE_NUMBER" class="java.lang.Integer" resetType="None">
+		<variableExpression><![CDATA[$V{CURRENT_PAGE_NUMBER} != null ? $V{CURRENT_PAGE_NUMBER} + 1 : 1]]></variableExpression>
+		<initialValueExpression><![CDATA[0]]></initialValueExpression>
+	</variable>
+	<variable name="EXECUTORS" class="java.lang.String" resetType="None"/>
+	<variable name="VERIFIERS" class="java.lang.String" resetType="None"/>
+	<variable name="EVERIFIERS" class="java.lang.String" resetType="None"/>
+	<variable name="VERIFIERS_PATIENT" class="java.lang.String" resetType="Group" resetGroup="PATIENT">
+		<variableExpression><![CDATA[$V{VERIFIERS_PATIENT}]]></variableExpression>
+	</variable>
+	<variable name="DOCS" class="java.lang.String"/>
+	<variable name="DOCS_PATIENT" class="java.lang.String" resetType="Group" resetGroup="PATIENT">
+		<variableExpression><![CDATA[$V{DOCS_PATIENT}]]></variableExpression>
+	</variable>
+	<group name="PATIENT" isStartNewPage="true" isResetPageNumber="true" isReprintHeaderOnEachPage="true" footerPosition="StackAtBottom">
+		<groupExpression><![CDATA[$F{PATIENT_ID}]]></groupExpression>
+		<groupHeader>
+			<band height="12" splitType="Prevent">
+				<image vAlign="Middle" onErrorType="Blank">
+					<reportElement x="3" y="0" width="12" height="12" isPrintInFirstWholeBand="true" uuid="42ff39fe-27dc-491c-913b-eb6a90fd2412">
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<imageExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/../static/address-card.png"]]></imageExpression>
+				</image>
+				<subreport>
+					<reportElement x="20" y="0" width="530" height="12" isRemoveLineWhenBlank="true" isPrintInFirstWholeBand="true" uuid="c7c94097-9c05-4d50-a889-13f7ebc27107">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					</reportElement>
+					<subreportParameter name="PATIENT_ID">
+						<subreportParameterExpression><![CDATA[$F{PATIENT_ID}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/patient.jasper"]]></subreportExpression>
+				</subreport>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band>
+				<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				<printWhenExpression><![CDATA[OR(EQUALS($P{PRINT_STAMPS},"1"), $V{DOCS_PATIENT} != null)]]></printWhenExpression>
+				<subreport>
+					<reportElement isPrintRepeatedValues="false" mode="Opaque" x="0" y="0" width="550" height="0" isRemoveLineWhenBlank="true" uuid="3d832adc-e358-4258-9515-eb3e7bac4876">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<subreportParameter name="ROOT_REPORT_PATH">
+						<subreportParameterExpression><![CDATA[$P{ROOT_REPORT_PATH}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter name="PRINT_STAMPS">
+						<subreportParameterExpression><![CDATA[$P{PRINT_STAMPS}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter name="VERIFIERS">
+						<subreportParameterExpression><![CDATA[Arrays.toString(new ArrayList(new HashSet(Arrays.asList($V{VERIFIERS_PATIENT}.split(", ")))).toArray()).replaceAll("(^\\[)(.*)(\\]$)", "$2")]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter name="DOCUMENTS">
+						<subreportParameterExpression><![CDATA[Arrays.toString(new ArrayList(new HashSet(Arrays.asList($V{DOCS_PATIENT}.split(", ")))).toArray()).replaceAll("(^\\[)(.*)(\\]$)", "$2")]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH}+"/footer.jasper"]]></subreportExpression>
+				</subreport>
+			</band>
+		</groupFooter>
+	</group>
+	<group name="RESEARCH" minHeightToStartNewPage="120">
+		<groupExpression><![CDATA[$F{RESEARCH_ID}]]></groupExpression>
+		<groupHeader>
+			<band height="12" splitType="Prevent">
+				<image vAlign="Middle" onErrorType="Blank">
+					<reportElement x="3" y="0" width="12" height="12" isPrintInFirstWholeBand="true" uuid="7237ae6f-543c-42a5-ab3e-6e790fcdd7b7">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
+					<imageExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/../static/file-alt.png"]]></imageExpression>
+				</image>
+				<subreport>
+					<reportElement x="20" y="0" width="530" height="12" isRemoveLineWhenBlank="true" isPrintInFirstWholeBand="true" uuid="f730ae88-eb20-4ca1-bf0f-ad03b10e9224">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					</reportElement>
+					<subreportParameter name="RESEARCH_ID">
+						<subreportParameterExpression><![CDATA[$F{RESEARCH_ID}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/research.jasper"]]></subreportExpression>
+				</subreport>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band splitType="Stretch">
+				<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			</band>
+		</groupFooter>
+	</group>
+	<group name="SPECIMEN" minHeightToStartNewPage="76">
+		<groupExpression><![CDATA[$F{SPECIMEN_ID}]]></groupExpression>
+		<groupHeader>
+			<band height="12" splitType="Prevent">
+				<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				<image vAlign="Middle" onErrorType="Blank">
+					<reportElement x="3" y="0" width="12" height="12" isPrintInFirstWholeBand="true" uuid="1e32e228-7f79-4b11-85fb-6099d2b52a01">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
+					<imageExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/../static/vial.png"]]></imageExpression>
+				</image>
+				<subreport>
+					<reportElement x="20" y="0" width="530" height="12" isRemoveLineWhenBlank="true" isPrintInFirstWholeBand="true" uuid="690536b6-8f2a-4e08-a35c-12722d95b7e9">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					</reportElement>
+					<subreportParameter name="RESEARCH_ID">
+						<subreportParameterExpression><![CDATA[$F{SPECIMEN_ID}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/specimen.jasper"]]></subreportExpression>
+				</subreport>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band splitType="Stretch"/>
+		</groupFooter>
+	</group>
+	<pageHeader>
+		<band height="60" splitType="Prevent">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<staticText>
+				<reportElement x="-10" y="0" width="560" height="12" uuid="fad4455e-b5dd-4d77-8627-2f379be13df1">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font fontName="DejaVu Sans" size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ГБУЗ СО «Противотуберкулёзный диспансер»]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="-10" y="12" width="560" height="12" uuid="aaf2d27d-de10-48c4-bcc1-60a64ba2515f">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="1" leftPadding="5"/>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font fontName="DejaVu Sans" size="10" isBold="true"/>
+					<paragraph spacingBefore="0" spacingAfter="0"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{LPU}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="-10" y="24" width="560" height="32" uuid="4d5f0dfa-8260-4a4a-b0df-ab66f0008115">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<text><![CDATA[Свердловская область, г. Екатеринбург, ул. Дублёр Сибирского тракта, 56
+тел. (343) 220-21-00
+Лицензия № ЛО-66-01-006773 от 25.12.2020г.]]></text>
+			</staticText>
+			<image>
+				<reportElement x="20" y="0" width="50" height="50" uuid="37656f75-4349-44dd-8a3a-93b2bdc0d7d2">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<imageExpression><![CDATA[$P{ROOT_REPORT_PATH} + "\\logo.png"]]></imageExpression>
+			</image>
+		</band>
+	</pageHeader>
+	<detail>
+		<band>
+			<subreport overflowType="Stretch">
+				<reportElement x="0" y="0" width="550" height="0" isRemoveLineWhenBlank="true" isPrintInFirstWholeBand="true" uuid="7025a46a-fd2b-4fd7-ba4e-715b904cbf43">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<subreportParameter name="ROOT_REPORT_PATH">
+					<subreportParameterExpression><![CDATA[$P{ROOT_REPORT_PATH}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="RESEARCH_ID">
+					<subreportParameterExpression><![CDATA[$F{SPECIMEN_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<returnValue subreportVariable="EXECUTORS" toVariable="EXECUTORS"/>
+				<returnValue subreportVariable="VERIFIERS" toVariable="VERIFIERS"/>
+				<returnValue subreportVariable="EVERIFIERS_DISTINCT" toVariable="EVERIFIERS"/>
+				<returnValue subreportVariable="DOCS" toVariable="DOCS"/>
+				<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH}+"/results3_mbl.jasper"]]></subreportExpression>
+			</subreport>
+			<returnValue toVariable="VERIFIERS_PATIENT">
+				<expression><![CDATA[$V{VERIFIERS_PATIENT} == null ? $V{VERIFIERS}
+: $V{VERIFIERS_PATIENT} + ($V{VERIFIERS} == null ? "" : ", " + $V{VERIFIERS})]]></expression>
+			</returnValue>
+			<returnValue toVariable="DOCS_PATIENT">
+				<expression><![CDATA[$V{DOCS_PATIENT} == null ? $V{DOCS}
+: $V{DOCS_PATIENT} + ($V{DOCS} == null ? "" : ", " + $V{DOCS})]]></expression>
+			</returnValue>
+		</band>
+		<band height="12" splitType="Prevent">
+			<printWhenExpression><![CDATA[$V{EVERIFIERS} != null]]></printWhenExpression>
+			<staticText>
+				<reportElement x="0" y="0" width="90" height="12" isRemoveLineWhenBlank="true" uuid="ff399440-cb45-44b8-890d-4c86bca5aaff"/>
+				<box padding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="0" spacingBefore="0"/>
+				</textElement>
+				<text><![CDATA[Врач-бактериолог:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="90" y="0" width="460" height="12" isRemoveLineWhenBlank="true" uuid="cfd9e852-8278-47f8-bb6d-7b645ec82ad9">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10"/>
+					<paragraph leftIndent="0" spacingBefore="0"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{EVERIFIERS}]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="20">
+			<staticText>
+				<reportElement x="155" y="8" width="100" height="12" isRemoveLineWhenBlank="true" uuid="b83fb271-28b5-4400-b552-df5170e202cd">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box padding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="0" spacingBefore="0"/>
+				</textElement>
+				<text><![CDATA[]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="8" width="155" height="12" isRemoveLineWhenBlank="true" uuid="c0087f57-a2f1-44cb-97ae-ff84ab782291">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box padding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="0" spacingBefore="0"/>
+				</textElement>
+				<text><![CDATA[Ответственный за оформление:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="255" y="8" width="295" height="12" isRemoveLineWhenBlank="true" uuid="612274d1-c7e6-4f9f-9050-f1629c9f0fa9">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box padding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10"/>
+					<paragraph leftIndent="0" spacingBefore="0"/>
+				</textElement>
+				<textFieldExpression><![CDATA["(" + $F{MAN} + ")"]]></textFieldExpression>
+			</textField>
+		</band>
+		<band>
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<printWhenExpression><![CDATA[0 == 1]]></printWhenExpression>
+			<subreport>
+				<reportElement x="0" y="0" width="550" height="0" isRemoveLineWhenBlank="true" uuid="1b1fefca-9463-4321-bb65-52fade731b2e">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<subreportParameter name="RESEARCH_ID">
+					<subreportParameterExpression><![CDATA[$F{SPECIMEN_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH}+"/ordservices.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="10">
+			<printWhenExpression><![CDATA[1==0]]></printWhenExpression>
+			<textField evaluationTime="Auto" pattern="">
+				<reportElement positionType="FixRelativeToBottom" mode="Opaque" x="0" y="0" width="400" height="10" uuid="542e37c9-3b58-45fd-90bc-9c33a8a31c34">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<printWhenExpression><![CDATA[1 == 0]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement verticalAlignment="Bottom">
+					<font fontName="DejaVu Sans" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Напечатано в ЛИС 'Ариадна': " + $V{CURRENT_DATE}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Page">
+				<reportElement positionType="FixRelativeToBottom" mode="Opaque" x="400" y="0" width="120" height="10" uuid="d48c03a2-3ac5-41ea-8131-567de9673c23">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Bottom">
+					<font fontName="DejaVu Sans" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA["стр. " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Group" evaluationGroup="PATIENT">
+				<reportElement positionType="FixRelativeToBottom" mode="Opaque" x="520" y="0" width="30" height="10" uuid="67028935-4b3e-4e84-b815-f8751e55756f">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Bottom">
+					<font fontName="DejaVu Sans" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[" из " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+</jasperReport>

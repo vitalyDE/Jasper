@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.2.0.final using JasperReports Library version 6.2.0  -->
+<!-- 2019-08-02T09:29:24 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="results_protocols" pageWidth="550" pageHeight="792" whenNoDataType="BlankPage" columnWidth="550" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="1441f28b-7d07-4345-9ab0-29ec37bc3a8e">
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="MED"/>
+	<parameter name="FORM_RESULT_ID" class="java.lang.String"/>
+	<queryString language="plsql">
+		<![CDATA[SELECT f.text            AS form
+      ,(select distinct first_value(text) over (order BY sortcode desc) 
+          from solution_form.form_item 
+         where form_id = f.id
+           and typ = 0 
+           and sortcode < fi.sortcode) as ftitle
+      ,fi.text           AS fres
+      ,NVL(frv.c_text, frv.text) AS fval
+      ,fi.note            AS fnote
+      ,fi.sortcode
+  FROM solution_form.form             f
+      ,solution_form.form_item        fi
+      ,solution_lab.form_result_value frv
+ WHERE fi.form_id = f.id
+   AND frv.form_item_id = fi.id
+   AND fi.status = 1
+   AND NVL(frv.c_text, frv.text) IS NOT NULL
+   AND frv.form_result_id = $P{FORM_RESULT_ID}
+ ORDER BY sortcode]]>
+	</queryString>
+	<field name="FORM" class="java.lang.String"/>
+	<field name="FTITLE" class="java.lang.String"/>
+	<field name="FRES" class="java.lang.String"/>
+	<field name="FVAL" class="java.lang.String"/>
+	<field name="FNOTE" class="java.lang.String"/>
+	<field name="SORTCODE" class="java.lang.Integer"/>
+	<variable name="FVAL" class="java.lang.String">
+		<variableExpression><![CDATA["<pre>" + org.apache.commons.lang.StringEscapeUtils.escapeHtml(RTRIM($F{FVAL})).replaceAll("(\\d+)(\\^)(\\d{1,2})","$1<sup>$3</sup>") + "</pre>"]]></variableExpression>
+	</variable>
+	<variable name="FNOTE" class="java.lang.String">
+		<variableExpression><![CDATA["<pre>" + org.apache.commons.lang.StringEscapeUtils.escapeHtml($F{FNOTE}).replaceAll("(\\d+)(\\^)(\\d{1,2})","$1<sup>$3</sup>") + "</pre>"]]></variableExpression>
+	</variable>
+	<group name="TITLE">
+		<groupExpression><![CDATA[$F{FTITLE}]]></groupExpression>
+		<groupHeader>
+			<band height="12">
+				<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement x="0" y="0" width="550" height="12" isRemoveLineWhenBlank="true" uuid="8b14b71d-f4f3-4703-905d-441ac4287785">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+						<paragraph firstLineIndent="0" leftIndent="18" rightIndent="0"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{FTITLE}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band>
+				<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			</band>
+		</groupFooter>
+	</group>
+	<detail>
+		<band height="12">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToTallestObject" x="0" y="0" width="210" height="12" isRemoveLineWhenBlank="true" uuid="8d751dc2-883b-457c-a10c-8292f8b7d983"/>
+				<box>
+					<bottomPen lineWidth="0.2" lineColor="#A0A0A0"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph firstLineIndent="0" leftIndent="3" rightIndent="3"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{FRES}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToTallestObject" x="210" y="0" width="340" height="12" isRemoveLineWhenBlank="true" uuid="09e0db9d-06cc-43df-a29d-8e5babecf370">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<printWhenExpression><![CDATA[$V{FNOTE} == null]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.2" lineColor="#A0A0A0"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle" markup="html">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph firstLineIndent="0" leftIndent="3" rightIndent="3"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{FVAL}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToTallestObject" x="405" y="0" width="145" height="12" isRemoveLineWhenBlank="true" uuid="cc7e7122-3a34-4f83-b0b1-ccc54942aab9">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$V{FNOTE} != null]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.2" lineColor="#A0A0A0"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle" markup="html">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph firstLineIndent="0" leftIndent="3" rightIndent="3"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{FNOTE}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToTallestObject" x="210" y="0" width="195" height="12" isRemoveLineWhenBlank="true" uuid="983275e8-da2c-4fa5-8ad6-7938a379a434">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<printWhenExpression><![CDATA[$V{FNOTE} != null]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.2" lineColor="#A0A0A0"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle" markup="html">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph firstLineIndent="0" leftIndent="3" rightIndent="3"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{FVAL}]]></textFieldExpression>
+			</textField>
+		</band>
+		<band>
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<frame>
+				<reportElement x="0" y="0" width="550" height="0" isRemoveLineWhenBlank="true" uuid="44360742-a15e-4bae-9171-b4fe7cf1216b">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.1" lineStyle="Solid" lineColor="#A0A0A0"/>
+					<leftPen lineWidth="0.1" lineStyle="Solid" lineColor="#A0A0A0"/>
+					<bottomPen lineWidth="0.1" lineStyle="Solid" lineColor="#A0A0A0"/>
+					<rightPen lineWidth="0.1" lineStyle="Solid" lineColor="#A0A0A0"/>
+				</box>
+			</frame>
+		</band>
+	</detail>
+</jasperReport>

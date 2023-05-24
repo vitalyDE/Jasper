@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename resource &apos;MyReports/JasperReportsLessons/NEW_DATAADAPTER.xml&apos; to &apos;_hr.xml&apos;" description="Rename resource &apos;NEW_DATAADAPTER.xml&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="JasperReportsLessons/NEW_DATAADAPTER.xml" name="_hr.xml" stamp="1679213002902" updateReferences="true"/>
+</session>

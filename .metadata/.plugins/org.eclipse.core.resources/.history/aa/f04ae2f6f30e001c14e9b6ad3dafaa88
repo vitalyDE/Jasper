@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.2.0.final using JasperReports Library version 6.2.0  -->
+<!-- 2020-12-25T11:48:19 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="lpu" pageWidth="555" pageHeight="842" whenNoDataType="BlankPage" columnWidth="555" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="1441f28b-7d07-4345-9ab0-29ec37bc3a8e">
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="A0005"/>
+	<parameter name="ROOT_REPORT_PATH" class="java.lang.String"/>
+	<parameter name="RESEARCH_ID" class="java.lang.String"/>
+	<queryString language="plsql">
+		<![CDATA[WITH tab AS
+ (SELECT rownum rn
+               ,column_value
+    FROM TABLE(p_collections.string_to_table_of_id($P{RESEARCH_ID})))
+SELECT DISTINCT
+              (select nvl(nvl(printtext,text),'Клинико-диагностическая лаборатория') 
+                FROM V_THIS_LPU_DATA) as lpu
+              ,(case when 2259582 in (select v.place_id
+             from V_LAB_RESEARCH_WORKPLACE v where v.research_id = r.id) then 1 else 0 end) as fl_mbl
+  FROM solution_lab.research r
+             ,tab                   t
+ WHERE (r.root_id = column_value OR (r.id = column_value AND r.root_id IS NOT NULL))
+      AND r.print_status > 0]]>
+	</queryString>
+	<field name="FL_MBL" class="java.lang.String"/>
+	<detail>
+		<band height="82" splitType="Stretch">
+			<image onErrorType="Blank">
+				<reportElement x="20" y="0" width="80" height="50" uuid="617eedf3-d473-4a14-88f0-f5951c167b08">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<imageExpression><![CDATA[$P{ROOT_REPORT_PATH} + "\\logo.png"]]></imageExpression>
+			</image>
+			<staticText>
+				<reportElement x="100" y="0" width="450" height="25" uuid="2f4add41-1059-47ad-81ee-36a9ca5cf344"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Государственное Бюджетное Учреждение Здравоохранения Свердловской области “Центральная Городская Больница №7 город Екатеринбург”]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="10" y="50" width="290" height="25" uuid="29d3a980-b4ff-4141-94e8-e317020d7acf">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<printWhenExpression><![CDATA[EQUALS($F{FL_MBL},"0")]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Top">
+					<font fontName="DejaVu Sans" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[ул. Вилонова,33
+ул. Сыромолотова,19]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="300" y="50" width="245" height="25" uuid="8909dd2f-6526-4590-a856-f562bd740229">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<printWhenExpression><![CDATA[EQUALS($F{FL_MBL},"0")]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Top">
+					<font fontName="DejaVu Sans" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[тел. 341-68-47
+тел. 347-25-65]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="100" y="25" width="450" height="14" uuid="e0719324-71cd-4f45-b896-8a039b1a1a58">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<printWhenExpression><![CDATA[EQUALS($F{FL_MBL},"0")]]></printWhenExpression>
+				</reportElement>
+				<box padding="1" leftPadding="5"/>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font fontName="DejaVu Sans" size="10" isBold="true"/>
+					<paragraph spacingBefore="0" spacingAfter="0"/>
+				</textElement>
+				<text><![CDATA[Клинико-диагностическая лаборатория]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="100" y="25" width="450" height="14" uuid="edf1d27e-8b66-47cc-98d9-bad50d908070">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<printWhenExpression><![CDATA[EQUALS($F{FL_MBL},"1")]]></printWhenExpression>
+				</reportElement>
+				<box padding="1" leftPadding="5"/>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font fontName="DejaVu Sans" size="10" isBold="true"/>
+					<paragraph spacingBefore="0" spacingAfter="0"/>
+				</textElement>
+				<text><![CDATA[Бактериологическая лаборатория]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="10" y="50" width="290" height="25" uuid="d76afad1-bc03-45d5-aa5f-a57a360752a4">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<printWhenExpression><![CDATA[EQUALS($F{FL_MBL},"1")]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Top">
+					<font fontName="DejaVu Sans" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[ул. Вилонова,33
+]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="300" y="50" width="245" height="25" uuid="f4bf08bc-25cf-47f5-96d7-39d6b3d426ea">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<printWhenExpression><![CDATA[EQUALS($F{FL_MBL},"1")]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Top">
+					<font fontName="DejaVu Sans" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[тел. 341-69-01]]></text>
+			</staticText>
+		</band>
+	</detail>
+</jasperReport>

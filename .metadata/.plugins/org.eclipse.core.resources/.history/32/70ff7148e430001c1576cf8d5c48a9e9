@@ -1,0 +1,462 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.2.0.final using JasperReports Library version 6.2.0  -->
+<!-- 2021-08-04T13:04:10 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="research" pageWidth="530" pageHeight="842" columnWidth="530" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="55f2a5fb-b675-4a67-bb7c-c6e13794d7dc">
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<style name="Table_TH" mode="Opaque" backcolor="#F0F8FF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table_TD" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table_CH" mode="Opaque" backcolor="#BFE1FF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table 1_TH" mode="Opaque" backcolor="#F0F8FF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table 1_CH" mode="Opaque" backcolor="#BFE1FF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<parameter name="RESEARCH_ID" class="java.lang.String"/>
+	<queryString language="plsql">
+		<![CDATA[select (select l.text from solution_lab.lu l where l.id = r.category_id) AS category
+      , a.finance AS fincode
+      --,(select l.text from solution_med.lu l where l.tag = 5 and l.code = a.finance) AS finance
+      ,(select FN_GET_TRANSLIT(l.text) from solution_med.lu l where l.tag = 5 and l.code = a.finance) AS finance
+      --,(select c.text from company c where c.keyid = a.companyid) AS company
+      ,(select FN_GET_TRANSLIT(c.text) from company c where c.keyid = a.companyid) AS company
+      ,(select listagg(nvl(c.note,c.text), ', ') within GROUP(ORDER BY c.text)
+          from solution_lab.research_conditions rc
+              ,solution_lab.condition           c
+         where rc.condition_id = c.id
+           and rc.research_id = r.id) AS pat_condition
+      --,p_lab_utils.get_r_cust_text(r.id) as direct
+      ,(case WHEN r.external_customer_id is not null
+              THEN (select nvl(text_eng,FN_GET_TRANSLIT(text)) from solution_lab.lu where id = r.external_customer_id)
+             WHEN r.internal_customer_id is not null
+              THEN (select FN_GET_TRANSLIT(text) from solution_med.dep where keyid = r.internal_customer_id)
+             ELSE null END) as direct
+      --,p_lab_utils.get_r_dirdoc_text(r.id) as direct_doctor
+      ,trim(FN_GET_TRANSLIT(nvl(p_lab_utils.get_r_dirdoc_text(r.id),' '), 9303)) as direct_doctor
+      ,r.research_num AS direct_num
+      ,to_char(r.income_date, 'dd.MM.yyyy') AS direct_date
+      ,r.orderid
+      ,to_char(r.regdate, 'dd.MM.yyyy') AS reg_date
+      --,(select l.text from solution_lab.lu l where l.id = r.research_goal_id) AS research_goal
+      ,(select nvl(l.text_eng,FN_GET_TRANSLIT(l.text)) from solution_lab.lu l where l.id = r.research_goal_id) AS research_goal
+      ,(select listagg(d.code, ', ') within GROUP(ORDER BY d.code)
+          from solution_lab.research_diagnos rd
+              ,solution_med.diagnos          d
+         where rd.diagnos_id = d.keyid
+           and rd.research_id = r.id) as diagnos
+       --,r.note
+       ,trim(FN_GET_TRANSLIT(nvl(r.note,' '))) as note
+       ,(select listagg(fi.text||': '||decode(fi.data_type,2,substr(frv.text,12),frv.text),chr(10)) within group (order by fi.sortcode)
+           from solution_form.form f
+              , solution_form.form_item fi
+              , solution_reg.form_result_labdirect fr
+              , solution_reg.form_result_value_labdirect frv
+          where f.id = fi.form_id
+            and fr.id = frv.form_result_id
+            and fi.id = frv.form_item_id
+            and fr.link_id = r.id
+            and f.code = 'LABDIRECT_ADDITIONAL_FORM') as add_data
+  from solution_lab.research r
+  left join 
+       agr a ON a.keyid = r.agr_id
+where r.id = $P{RESEARCH_ID}]]>
+	</queryString>
+	<field name="ORDERID" class="java.lang.String"/>
+	<field name="REG_DATE" class="java.lang.String"/>
+	<field name="PAT_CONDITION" class="java.lang.String"/>
+	<field name="CATEGORY" class="java.lang.String"/>
+	<field name="DIRECT" class="java.lang.String"/>
+	<field name="DIRECT_DOCTOR" class="java.lang.String"/>
+	<field name="DIRECT_NUM" class="java.lang.String"/>
+	<field name="DIRECT_DATE" class="java.lang.String"/>
+	<field name="RESEARCH_GOAL" class="java.lang.String"/>
+	<field name="DIAGNOS" class="java.lang.String"/>
+	<field name="NOTE" class="java.lang.String"/>
+	<field name="ADD_DATA" class="java.lang.String"/>
+	<field name="FINCODE" class="java.lang.String"/>
+	<field name="FINANCE" class="java.lang.String"/>
+	<field name="COMPANY" class="java.lang.String"/>
+	<variable name="STRING_FOR_QR" class="java.lang.String">
+		<variableExpression><![CDATA[$F{DIRECT} != null ? " Organization: " + $F{DIRECT}  : "123"]]></variableExpression>
+	</variable>
+	<pageHeader>
+		<band height="2">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="12">
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="0" width="335" height="12" isRemoveLineWhenBlank="true" uuid="57e20d33-6fb8-4b45-aa48-77a787d14713">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="0" leftPadding="0" rightPadding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Order № " + $F{ORDERID}  + " reg. " + $F{REG_DATE}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="425" y="0" width="105" height="12" isRemoveLineWhenBlank="true" uuid="6c6949e8-fdb2-4b24-a0b4-0242db3972be">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="0" leftPadding="0" rightPadding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph rightIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{DIRECT_NUM}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="335" y="0" width="90" height="12" isRemoveLineWhenBlank="true" uuid="3897d178-cfc4-46a6-b255-2664b3355dae">
+					<printWhenExpression><![CDATA[$F{DIRECT_NUM} != null]]></printWhenExpression>
+				</reportElement>
+				<box padding="0" leftPadding="0" rightPadding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph rightIndent="5"/>
+				</textElement>
+				<text><![CDATA[Direction №:]]></text>
+			</staticText>
+		</band>
+		<band height="12">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="80" y="0" width="255" height="12" isRemoveLineWhenBlank="true" uuid="55cd0e09-96c8-4b0b-b042-e76658a7b304">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box padding="0" leftPadding="0" rightPadding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{DIRECT}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="dd.MM.yyyy" isBlankWhenNull="true">
+				<reportElement x="425" y="0" width="105" height="12" isRemoveLineWhenBlank="true" uuid="4216eb99-1d94-464c-a749-da1ff7214ae4">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="0" leftPadding="0" rightPadding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph rightIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{DIRECT_DATE}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="0" width="80" height="12" isRemoveLineWhenBlank="true" uuid="77f3ecd8-31a2-4d90-9a5e-a37e2957f5ef">
+					<printWhenExpression><![CDATA[$F{DIRECT} != null]]></printWhenExpression>
+				</reportElement>
+				<box padding="0" leftPadding="0" rightPadding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<text><![CDATA[Organization:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="335" y="0" width="90" height="12" isRemoveLineWhenBlank="true" uuid="b256bf57-5d31-43cb-ac9e-1754d6c1d36b">
+					<printWhenExpression><![CDATA[$F{DIRECT_DATE} != null]]></printWhenExpression>
+				</reportElement>
+				<box padding="0" leftPadding="0" rightPadding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph rightIndent="5"/>
+				</textElement>
+				<text><![CDATA[Direction date:]]></text>
+			</staticText>
+		</band>
+		<band height="12">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="80" y="0" width="255" height="12" isRemoveLineWhenBlank="true" uuid="7eeba550-42c4-4d83-be48-5f95d4817b58">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="0" leftPadding="0" rightPadding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{DIRECT_DOCTOR}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="425" y="0" width="105" height="12" isRemoveLineWhenBlank="true" uuid="fd5f6f69-9f64-4870-9c50-467cc00ba52d">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box padding="0" leftPadding="0" rightPadding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10"/>
+					<paragraph rightIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{CATEGORY}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="0" width="80" height="12" isRemoveLineWhenBlank="true" uuid="3c4a6b5b-46fa-4158-a5bc-479869ed3775">
+					<printWhenExpression><![CDATA[$F{DIRECT_DOCTOR} != null]]></printWhenExpression>
+				</reportElement>
+				<box padding="0" leftPadding="0" rightPadding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<text><![CDATA[Doctor:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="335" y="0" width="90" height="12" isRemoveLineWhenBlank="true" uuid="87d1fbf4-4c99-4c7a-be41-1ff191c9afa0">
+					<printWhenExpression><![CDATA[$F{CATEGORY} != null]]></printWhenExpression>
+				</reportElement>
+				<box padding="0" leftPadding="0" rightPadding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph rightIndent="5"/>
+				</textElement>
+				<text><![CDATA[Category:]]></text>
+			</staticText>
+		</band>
+		<band height="12" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="80" y="0" width="255" height="12" isRemoveLineWhenBlank="true" uuid="b2ca735b-04ea-47cd-9b79-ca45424149cf">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box padding="0" leftPadding="0" rightPadding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{PAT_CONDITION}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="425" y="0" width="105" height="12" isRemoveLineWhenBlank="true" uuid="8e420e7b-34cb-4e08-934f-e0c4fa158c94">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box padding="0" leftPadding="0" rightPadding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{DIAGNOS}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="0" width="80" height="12" isRemoveLineWhenBlank="true" uuid="fa382b3b-0daf-4c70-9b9d-307cb9f999b8">
+					<printWhenExpression><![CDATA[$F{PAT_CONDITION} != null]]></printWhenExpression>
+				</reportElement>
+				<box padding="0" leftPadding="0" rightPadding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<text><![CDATA[Condition:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="335" y="0" width="90" height="12" isRemoveLineWhenBlank="true" uuid="045e2c6e-bc65-41ad-967e-eddaf3519e59">
+					<printWhenExpression><![CDATA[$F{DIAGNOS} != null]]></printWhenExpression>
+				</reportElement>
+				<box padding="0" leftPadding="0" rightPadding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph rightIndent="5"/>
+				</textElement>
+				<text><![CDATA[Diagnosis:]]></text>
+			</staticText>
+		</band>
+		<band height="12">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="0" y="0" width="335" height="12" isRemoveLineWhenBlank="true" uuid="10ca9379-8731-440a-aac0-f524c3c39e6b">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{ADD_DATA} != null]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="0" spacingBefore="0"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{ADD_DATA}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="425" y="0" width="105" height="12" isRemoveLineWhenBlank="true" uuid="a72a3f62-686d-41d2-8fed-009bea46d74f">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box padding="0" leftPadding="0" rightPadding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{RESEARCH_GOAL}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="335" y="0" width="90" height="12" isRemoveLineWhenBlank="true" uuid="077792e2-0296-479c-b34d-e43f9f8f251d">
+					<printWhenExpression><![CDATA[$F{RESEARCH_GOAL} != null]]></printWhenExpression>
+				</reportElement>
+				<box padding="0" leftPadding="0" rightPadding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph rightIndent="5"/>
+				</textElement>
+				<text><![CDATA[Research goal:]]></text>
+			</staticText>
+		</band>
+		<band height="12">
+			<printWhenExpression><![CDATA[$F{NOTE} != null]]></printWhenExpression>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="80" y="0" width="450" height="12" isRemoveLineWhenBlank="true" uuid="00640b49-76f6-4d08-9e0e-997123b7e2b9">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10"/>
+					<paragraph leftIndent="0" spacingBefore="0"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{NOTE}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="0" width="80" height="12" isRemoveLineWhenBlank="true" uuid="e6c0626a-950e-4aba-a6f1-011ba546192e"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="0" spacingBefore="0"/>
+				</textElement>
+				<text><![CDATA[Note:]]></text>
+			</staticText>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="2"/>
+	</pageFooter>
+</jasperReport>

@@ -1,0 +1,765 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.2.0.final using JasperReports Library version 6.2.0  -->
+<!-- 2020-11-30T23:51:58 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="contract" pageWidth="550" pageHeight="842" columnWidth="550" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="55f2a5fb-b675-4a67-bb7c-c6e13794d7dc">
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<style name="Table_TH" mode="Opaque" backcolor="#F0F8FF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table_TD" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table_CH" mode="Opaque" backcolor="#BFE1FF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table 1_TH" mode="Opaque" backcolor="#F0F8FF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table 1_CH" mode="Opaque" backcolor="#BFE1FF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<parameter name="RESEARCH_ID" class="java.lang.String"/>
+	<parameter name="ROOT_REPORT_PATH" class="java.lang.String"/>
+	<queryString language="plsql">
+		<![CDATA[select r.ids
+           ,to_char(r.regdate,'dd.mm.yyyy') as reg_date
+           ,fn_pat_name_by_id(r.patient_id) fio
+           ,coalesce(to_char(p.birthdate, 'dd.MM.yyyy'),'                           ') AS bdate
+           ,coalesce(p.cellular,p.phone,'                           ') AS phone
+           ,coalesce(p.note,'                           ') as email
+           ,coalesce(gsp_get_pat_address(p.keyid, 1, 0),'                           ') AS address
+           ,coalesce(gsp_get_pat_address(p.keyid, 2, 0),'                           ') AS address1
+           ,coalesce(fn_pat_pass_str(r.patient_id),'                           ') AS pass
+           ,(select upper(trim(text)) from solution_lab.lu where id = r.external_customer_id) as customer
+  from solution_lab.research r
+          , solution_med.patient p
+where r.id = $P{RESEARCH_ID}
+     and r.patient_id = p.keyid]]>
+	</queryString>
+	<field name="IDS" class="java.lang.String"/>
+	<field name="REG_DATE" class="java.lang.String"/>
+	<field name="FIO" class="java.lang.String"/>
+	<field name="BDATE" class="java.lang.String"/>
+	<field name="PHONE" class="java.lang.String"/>
+	<field name="EMAIL" class="java.lang.String"/>
+	<field name="ADDRESS" class="java.lang.String"/>
+	<field name="ADDRESS1" class="java.lang.String"/>
+	<field name="PASS" class="java.lang.String"/>
+	<field name="CUSTOMER" class="java.lang.String"/>
+	<detail>
+		<band height="14">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="0" y="0" width="550" height="14" isRemoveLineWhenBlank="true" uuid="8a7bdbaa-8a82-4edf-a2b2-b5f71dfd8628">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="1"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA["ДОГОВОР-ЗАКАЗ на оказание платных медицинских услуг, регистрационный номер № " + $F{IDS}]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="14">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="0" y="0" width="550" height="14" isRemoveLineWhenBlank="true" uuid="e6bfefb5-aa28-4576-9617-2f5e4e02452f"/>
+				<box padding="1"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Дата заключения Договора-заказа: " + $F{REG_DATE} + " г."]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="14">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="0" y="0" width="550" height="14" isRemoveLineWhenBlank="true" uuid="a30e8a2b-ab8a-4131-8f12-4007b2818410"/>
+				<box padding="1"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Контактный центр тел.: (000) 000-00-00, Email: test@test.ru, Режим работы: Пн-Вс 09:00-21:00"]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="60" splitType="Prevent">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="0" y="0" width="550" height="60" uuid="9d2ac9b3-37e2-4212-98da-7e469735db75">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="1"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Общество с ограниченной ответственностью «Клиника», действующее на основании лицензии ЛО- от dd.mm.yyyy г., выданной Департаментом здравоохранения города Москвы, в лице генерального директора Генеральный Директор, с одной стороны, и гр. "+ $F{FIO} + "(Заказчик) с другой стороны, вместе именуемые Стороны, заключили настоящий Договор-заказ о нижеследующем: "]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="28">
+			<staticText>
+				<reportElement x="0" y="0" width="550" height="28" isRemoveLineWhenBlank="true" uuid="058969f4-e5bf-4929-847c-53cd997caf34">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="1"/>
+				<textElement verticalAlignment="Bottom">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<text><![CDATA[1. ДАННЫЕ ПАЦИЕНТА:]]></text>
+			</staticText>
+		</band>
+		<band height="14">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="0" y="0" width="550" height="14" isRemoveLineWhenBlank="true" uuid="cc83f2c7-aea3-46f1-9c58-a7dcb2755c25"/>
+				<box padding="1"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Пациент: " + $F{FIO} + ", Дата рождения: " + $F{BDATE}]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="14">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="0" y="0" width="550" height="14" isRemoveLineWhenBlank="true" uuid="a3ba04d3-9fb3-4e51-965f-3123c3a9f371"/>
+				<box padding="1"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Моб телефон: " + $F{PHONE} + ", E-mail: " + $F{EMAIL}]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="42">
+			<staticText>
+				<reportElement x="0" y="0" width="550" height="42" isRemoveLineWhenBlank="true" uuid="8fc19db6-f0a4-4abe-8760-ba814d78ffbd"/>
+				<box padding="1"/>
+				<textElement verticalAlignment="Bottom">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<text><![CDATA[2. ИСПОЛНИТЕЛЬ ОБЯЗУЕТСЯ ОКАЗАТЬ, А ЗАКАЗЧИК ПРИНЯТЬ И ОПЛАТИТЬ ПЛАТНЫЕ МЕДИЦИНСКИЕ
+УСЛУГИ, ОКАЗЫВАЕМЫЕ ЗАКАЗЧИКУ/ПАЦИЕНТУ:]]></text>
+			</staticText>
+		</band>
+		<band height="12">
+			<subreport>
+				<reportElement x="0" y="0" width="550" height="12" isRemoveLineWhenBlank="true" isPrintInFirstWholeBand="true" uuid="991bcbc7-5616-40b5-99e4-f8abc8bbbcd0">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<subreportParameter name="RESEARCH_ID">
+					<subreportParameterExpression><![CDATA[$P{RESEARCH_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/services.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="28">
+			<staticText>
+				<reportElement x="0" y="0" width="550" height="28" isRemoveLineWhenBlank="true" uuid="feaf5c8c-4064-4ade-b88a-a1cdb5c70754">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="1"/>
+				<textElement verticalAlignment="Bottom">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<text><![CDATA[3. ОБЯЗАТЕЛЬСТВА СТОРОН]]></text>
+			</staticText>
+		</band>
+		<band height="14">
+			<staticText>
+				<reportElement x="0" y="0" width="550" height="14" uuid="80203912-44f4-4d09-9915-fe6096b819ae">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="1"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Исполнитель обязуется:]]></text>
+			</staticText>
+		</band>
+		<band height="90">
+			<staticText>
+				<reportElement x="0" y="0" width="550" height="90" uuid="8bb05cc2-a55d-4792-8e57-6b997ea7531b"/>
+				<box padding="1"/>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<text><![CDATA[- оказать медицинские услуги по лабораторной диагностике и доставке, согласованные в п.2 Договора-заказа, в соответствие с условиями заключенного Договора-заказа, а также применимыми Порядками и Стандартами оказания медицинской помощи в течение 14 (четырнадцати) календарных дней и не позднее 24:00 от заключения договора-заказа. Сроки выполнения исследования могут быть изменены в случаях, установленных нормативно-правовыми актами РФ, иными обязательными требованиями. - сохранять конфиденциальность информации о здоровье Заказчика/Пациента, а также факте обращения за медицинской услугой, кроме случаев, установленных законодательством. Исполнитель вправе без дополнительного согласия Заказчика привлекать третьих лиц к исполнению настоящего Договора-заказа.
+]]></text>
+			</staticText>
+		</band>
+		<band height="14">
+			<staticText>
+				<reportElement x="0" y="0" width="550" height="14" uuid="01c3822e-869b-453c-a1ff-10075481d9bb">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="1"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Заказчик обязуется:]]></text>
+			</staticText>
+		</band>
+		<band height="80">
+			<staticText>
+				<reportElement x="0" y="0" width="550" height="80" uuid="44e950bb-68fd-45d3-9ae4-6eb9d204b646"/>
+				<box padding="1"/>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<text><![CDATA[- оплатить заказанные услуги в полном объеме в соответствие с п.4 Договора-заказа; - в целях исполнения Договора-заказа указать в нем достоверные сведения, включая паспортные данные, заполнить анкету на сайте Исполнителя; - обеспечить выполнение Пациентом требований к взятию биологического материала (согласно Правил самостоятельного взятия биоматериала, передаваемых Заказчику/Пациенту с расходными материалами для отбора первичной пробы), необходимых для качественного предоставления услуг Исполнителем. Стороны обязуются соблюдать требования действующего законодательства РФ в области охраны здоровья граждан, законодательства о предупреждении распространения ВИЧ-инфекции.]]></text>
+			</staticText>
+		</band>
+		<band height="28">
+			<staticText>
+				<reportElement x="0" y="0" width="550" height="28" isRemoveLineWhenBlank="true" uuid="c8cf6af3-3b5e-4d9d-9fc8-013768116900">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="1"/>
+				<textElement verticalAlignment="Bottom">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<text><![CDATA[4. ПОРЯДОК ОПЛАТЫ УСЛУГ]]></text>
+			</staticText>
+		</band>
+		<band height="66">
+			<staticText>
+				<reportElement x="0" y="0" width="550" height="66" uuid="63e809d4-a4ad-4421-a4fb-f66166c2655c">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="1"/>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<text><![CDATA[Расчеты за медицинские услуги по настоящему Договору-заказу производятся Заказчиком в порядке предварительной 100% предоплаты. В соответствии с пп. 2 п. 2 ст. 149 НК РФ услуги, оказываемые Исполнителем, НДС не облагаются. Стоимость расходных материалов для отбора первичной пробы включена в стоимость услуг по Договору-заказу. В случае невозможности выполнения заказанных услуг, по согласованию с заказчиком осуществляется повторное взятие биологического материала либо возврат стоимости фактически не выполненных услуг.]]></text>
+			</staticText>
+		</band>
+		<band height="28">
+			<staticText>
+				<reportElement x="0" y="0" width="550" height="28" isRemoveLineWhenBlank="true" uuid="3e8a6034-6a33-44de-8d14-bf6b6e1a69e6">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="1"/>
+				<textElement verticalAlignment="Bottom">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<text><![CDATA[5. УСЛОВИЯ ПРЕДОСТАВЛЕНИЯ УСЛУГ]]></text>
+			</staticText>
+		</band>
+		<band height="142">
+			<staticText>
+				<reportElement x="0" y="0" width="550" height="142" uuid="30bb280e-28bf-4433-838b-81216cc2e2a2"/>
+				<box padding="1"/>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<text><![CDATA[Заключая настоящий Договор-заказ, Заказчик подтверждает следующее: - Заказчик/Пациент получил всю интересующую его информацию о заказанной услуге, квалификации Исполнителя; - Заказчик/Пациент уведомлен, что непредоставление достоверной и полной информации, несоблюдение требований к самозабору биологического материала, несоблюдение указаний (рекомендаций) Исполнителя, могут снизить качество предоставляемой медицинской услуги, повлечь за собой невозможность ее выполнения/завершения в срок или отрицательно сказаться на состоянии здоровья Заказчика/Пациента; - Заказчик дает свое согласие и подтверждает согласие Пациента на обработку и хранение предоставленных персональных данных для исполнения настоящего Договора-заказа Исполнителем и привлеченными им третьими лицами, включая медицинские организации-соисполнители, а также в случаях, установленных действующим законодательством РФ, с соблюдением требований федерального закона от 27.07.2006 № 152-ФЗ О персональных данных», на срок, соответствующий сроку хранения первичных медицинских документов; Заказчик/Пациент вправе отозвать согласие на обработку персональных данных путем направления в установленном законом порядке соответствующего уведомления Исполнителю;]]></text>
+			</staticText>
+		</band>
+		<band height="86">
+			<staticText>
+				<reportElement x="0" y="0" width="550" height="86" uuid="cfcaf370-debe-4910-a125-05c6d9c15760"/>
+				<box padding="1"/>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<text><![CDATA[- В случаях, когда Заказчик не является Пациентом, он подтверждает, что действует добросовестно, по указанию и с согласия Пациента на получение платной медицинской услуги по проведению исследований в соответствии с условиями настоящего Договора-заказа, на получение Заказчиком результатов исследований Пациента. Заказчик самостоятельно отвечает перед Пациентом в случае нарушения им условий и предоставленных от имени пациента подтверждений, указанных в настоящем Договоре-заказе; - Заказчик/Пациент не возражает против использования Исполнителем в научных и исследовательских целях предоставленного им биологического материала без использования персональных данных пациента (в обезличенном виде).]]></text>
+			</staticText>
+		</band>
+		<band height="42">
+			<staticText>
+				<reportElement x="0" y="0" width="550" height="42" isRemoveLineWhenBlank="true" uuid="ecd31a29-84d4-49cc-bb7c-efaca5d52556"/>
+				<box padding="1"/>
+				<textElement verticalAlignment="Bottom">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<text><![CDATA[6. ПОРЯДОК ПОЛУЧЕНИЯ РЕЗУЛЬТАТОВ ИССЛЕДОВАНИЙ. РЕГИСТРАЦИОННЫЙ НОМЕР НАСТОЯЩЕГО ДОГОВОРА-ЗАКАЗА ЯВЛЯЮТСЯ СТРОГО КОНФИДЕНЦИАЛЬНОЙ ИНФОРМАЦИЕЙ!]]></text>
+			</staticText>
+		</band>
+		<band height="68">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<staticText>
+				<reportElement x="0" y="0" width="550" height="68" uuid="780db9e3-a843-44c8-bbaa-88d2a5dd4b3d">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="1"/>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<text><![CDATA[Сообщение регистрационного номера Договора-заказа является подтверждением полномочий лица от сообщившего их Заказчика/Пациента на получение информации о результатах исследований. Исполнитель не несет ответственности, если в результате умышленных или неосторожных действий Заказчика/Пациента информация о номере Договора-заказа, и как следствие, о факте обращения за медицинской услугой, результатах исследований, станет доступной третьим лицам. Результаты исследования предоставляются после 100% оплаты оказанных услуг и могут быть получены следующими способами: ]]></text>
+			</staticText>
+		</band>
+		<band height="84">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<staticText>
+				<reportElement x="0" y="0" width="275" height="28" uuid="c2695892-f796-491d-b294-8e8cfeee6d60">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Способ получения результатов исследований:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="275" y="0" width="275" height="28" uuid="9d4d6f16-c4d9-4755-999a-40fe79c75706">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Необходимые сведения для получения результатов, указанные в настоящем Договоре-заказе]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="28" width="275" height="14" uuid="3949cfc2-5fc4-4f1e-a92b-4e98436c780e">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[По электронной почте]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="275" y="28" width="275" height="14" uuid="1b9813a6-ccd6-4f55-a93d-a8c257a0668b">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Адрес электронной почты]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="42" width="275" height="14" uuid="8e583240-e533-4f23-a6cb-9d2bb65d5051">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[По Viber, Whatsupp, Telegram, др.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="275" y="42" width="275" height="14" uuid="6bad8ec5-f823-43ff-88f0-5ba99382f1b8">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Номер мобильного телефона]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="56" width="275" height="28" uuid="14df464c-4829-450b-8f91-f15cce85af12">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[По телефону контактного центра (000) 000-00-00]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="275" y="56" width="275" height="28" uuid="3aaef7d9-9d03-4378-ab75-959f9ad8760b">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Регистрационный номер Договора-заказа + ФИО пациента + дата рождения пациента]]></text>
+			</staticText>
+		</band>
+		<band height="108">
+			<staticText>
+				<reportElement x="0" y="0" width="550" height="108" uuid="efc527ea-451d-496b-99cb-54a01ab9245f">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="1"/>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<text><![CDATA[При этом Заказчик подтверждает свое согласие на передачу информации в электронной форме по открытым каналам связи сети Интернет и принимает все риски несанкционированного доступа третьих лиц к используемому им электронному устройству и приложениям, а также к каналам передачи информации операторов сотовой связи. В случае заказа данной услуги, Заказчик дает свое согласие на получение посредством сервисов обмена сообщениями (Viber, Whatsapp, Telegram, др.) по предоставленным им контактным данным сообщений о готовности результата, а также рекламно-информационных материалов Исполнителя и партнеров, в том числе предложений о скидках и акциях. Заказчик имеет право отказаться от получения рекламно-информационных материалов либо от обработки предоставленных персональных данных в установленном законом порядке путем направления соответствующего уведомления Исполнителю/ФБУН ЦНИИ Эпидемиологии Роспотребнадзора.]]></text>
+			</staticText>
+		</band>
+		<band height="28">
+			<staticText>
+				<reportElement x="0" y="0" width="550" height="28" isRemoveLineWhenBlank="true" uuid="725da724-d983-4b6d-ae6a-90c08f2941d4">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="1"/>
+				<textElement verticalAlignment="Bottom">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<text><![CDATA[7. ОТВЕТСТВЕННОСТЬ СТОРОН ]]></text>
+			</staticText>
+		</band>
+		<band height="76">
+			<staticText>
+				<reportElement x="0" y="0" width="550" height="76" uuid="f5bf605d-a920-4c6a-a942-4c66d6a68f17"/>
+				<box padding="1"/>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<text><![CDATA[Стороны несут ответственность по настоящему Договору-заказу в объеме и порядке, установленным действующим законодательством Российской Федерации. Все претензии Заказчика, Пациента, Законного представителя Пациента по настоящему Договору-заказу подлежат разрешению в установленном действующим законодательством РФ порядке. Требования, связанные с недостатками оказанной услуги, могут быть заявлены указанными лицами при принятии оказанной услуги или в ходе оказания услуги либо, если невозможно обнаружить недостатки при принятии оказанной услуги, в течение двух месяцев с момента оказания медицинской услуги Исполнителем.]]></text>
+			</staticText>
+		</band>
+		<band height="28">
+			<staticText>
+				<reportElement x="0" y="0" width="550" height="28" isRemoveLineWhenBlank="true" uuid="5a278fe1-5c26-44f6-bbe0-f3ebc8a8d859">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="1"/>
+				<textElement verticalAlignment="Bottom">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<text><![CDATA[8. ПОРЯДОК ИЗМЕНЕНИЯ И РАСТОРЖЕНИЯ ДОГОВОРА ]]></text>
+			</staticText>
+		</band>
+		<band height="46">
+			<staticText>
+				<reportElement x="0" y="0" width="550" height="46" uuid="db81dfb2-3971-49b3-a8f5-9aad329e34be"/>
+				<box padding="1"/>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+				</textElement>
+				<text><![CDATA[Настоящий Договор-заказ может быть изменен по соглашению Сторон, а также в случаях, установленных законодательством РФ. В случае отказа Заказчика после заключения Договора-заказа от получения услуг Исполнителя, Договор-заказ расторгается, при этом Заказчик обязан оплатить Исполнителю фактически понесенные расходы, связанные с исполнением обязательств по Договору-заказу.]]></text>
+			</staticText>
+		</band>
+		<band height="20">
+			<staticText>
+				<reportElement x="0" y="0" width="275" height="20" uuid="42d7c8cb-779c-42e3-aa37-3eb5fc0b2c82">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2"/>
+				</textElement>
+				<text><![CDATA[ИСПОЛНИТЕЛЬ:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="275" y="0" width="275" height="20" uuid="37cf74e2-f996-4f4f-b6bd-4a1aa7b6bcb0">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2"/>
+				</textElement>
+				<text><![CDATA[ЗАКАЗЧИК:]]></text>
+			</staticText>
+		</band>
+		<band height="154" splitType="Prevent">
+			<frame>
+				<reportElement x="0" y="0" width="275" height="154" uuid="e6fbd449-78e4-4f85-a75d-001e5f327234">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6"/>
+					<leftPen lineWidth="0.6"/>
+					<bottomPen lineWidth="0.6"/>
+					<rightPen lineWidth="0.6"/>
+				</box>
+				<staticText>
+					<reportElement x="0" y="0" width="275" height="14" uuid="4e2d418f-63cd-4dcd-a6d8-26c66988c296">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<box padding="1">
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="DejaVu Sans" size="9"/>
+						<paragraph leftIndent="2" rightIndent="2"/>
+					</textElement>
+					<text><![CDATA[ООО «Клиника»]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="0" y="14" width="275" height="14" uuid="1edee5c7-c2e5-4545-9c5f-e997471900c6">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<box padding="1">
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="DejaVu Sans" size="9"/>
+						<paragraph leftIndent="2" rightIndent="2"/>
+					</textElement>
+					<text><![CDATA[ИНН -, ОГРН -]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="0" y="42" width="275" height="28" uuid="9524f63c-26ce-4a7b-8d1b-fe642001ce8d">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<box padding="1">
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="DejaVu Sans" size="9"/>
+						<paragraph leftIndent="2" rightIndent="2"/>
+					</textElement>
+					<text><![CDATA[Юр. / Факт. адрес: -]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="0" y="70" width="275" height="42" uuid="fb95af26-0f5c-45c7-ab9e-64e1ea8de63d">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<box padding="1">
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="DejaVu Sans" size="9"/>
+						<paragraph leftIndent="2" rightIndent="2"/>
+					</textElement>
+					<text><![CDATA[Медицинская лицензия №ЛО-, выдана dd.mm.yyyy г. ]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="0" y="112" width="275" height="28" uuid="3891b5ce-db5d-4ecf-9f79-98f80d932ce2">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<box padding="1">
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement textAlignment="Left" verticalAlignment="Bottom">
+						<font fontName="DejaVu Sans" size="9"/>
+						<paragraph leftIndent="2" rightIndent="2"/>
+					</textElement>
+					<text><![CDATA[_____________________________________________________]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="0" y="140" width="275" height="14" uuid="aaba7ecf-6857-482e-9379-90e7588cebcf">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
+					<box padding="1">
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement textAlignment="Left" verticalAlignment="Bottom">
+						<font fontName="DejaVu Sans" size="9"/>
+						<paragraph leftIndent="2" rightIndent="2"/>
+					</textElement>
+					<text><![CDATA[(подпись Генеральный Директор)]]></text>
+				</staticText>
+			</frame>
+			<frame>
+				<reportElement x="275" y="0" width="275" height="154" uuid="d8d9e6f6-9f26-40aa-9185-f876f4ff3680"/>
+				<box>
+					<topPen lineWidth="0.6"/>
+					<leftPen lineWidth="0.6"/>
+					<bottomPen lineWidth="0.6"/>
+					<rightPen lineWidth="0.6"/>
+				</box>
+				<textField isBlankWhenNull="false">
+					<reportElement x="0" y="0" width="275" height="14" uuid="79dd7fe6-290d-4e1d-a146-bcccd298eff6"/>
+					<box padding="1">
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="DejaVu Sans" size="9"/>
+						<paragraph leftIndent="2" rightIndent="2"/>
+					</textElement>
+					<textFieldExpression><![CDATA["Пациент: " + $F{FIO}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="false">
+					<reportElement x="0" y="14" width="275" height="14" uuid="337edc3c-e252-42a1-8891-9cde07d39a0f"/>
+					<box padding="1">
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="DejaVu Sans" size="9"/>
+						<paragraph leftIndent="2" rightIndent="2"/>
+					</textElement>
+					<textFieldExpression><![CDATA["Паспорт: " +  $F{PASS}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement x="0" y="42" width="275" height="14" uuid="21e660d5-4480-4356-9567-93171d176c84"/>
+					<box padding="1">
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="DejaVu Sans" size="9"/>
+						<paragraph leftIndent="2" rightIndent="2"/>
+					</textElement>
+					<textFieldExpression><![CDATA["Моб телефон: " + $F{PHONE} + ", E-mail: " + $F{EMAIL}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="0" y="70" width="275" height="42" uuid="f3e69268-b980-48b7-9b04-be2df0ca6569">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<box padding="1">
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="DejaVu Sans" size="9"/>
+						<paragraph leftIndent="2" rightIndent="2"/>
+					</textElement>
+					<text><![CDATA[Заказ составлен верно, данные Заказчика/Пациента указаны корректно, с Правилами оказания платных медицинских услуг Исполнителя ознакомлен]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="0" y="112" width="275" height="28" uuid="34d5b869-f015-4862-9e36-c2e98d985f43">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<box padding="1">
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement textAlignment="Left" verticalAlignment="Bottom">
+						<font fontName="DejaVu Sans" size="9"/>
+						<paragraph leftIndent="2" rightIndent="2"/>
+					</textElement>
+					<text><![CDATA[_____________________________________________________]]></text>
+				</staticText>
+				<textField>
+					<reportElement x="0" y="140" width="275" height="14" uuid="797e648a-cedb-45ac-a3eb-6348fa87adb9"/>
+					<box padding="1">
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement textAlignment="Left" verticalAlignment="Bottom">
+						<font fontName="DejaVu Sans" size="9"/>
+						<paragraph leftIndent="2" rightIndent="2"/>
+					</textElement>
+					<textFieldExpression><![CDATA["(подпись " + $F{FIO} + ")"]]></textFieldExpression>
+				</textField>
+			</frame>
+		</band>
+	</detail>
+</jasperReport>

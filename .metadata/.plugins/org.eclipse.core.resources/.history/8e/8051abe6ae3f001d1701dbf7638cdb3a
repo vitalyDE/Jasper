@@ -1,0 +1,1036 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.2.0.final using JasperReports Library version 6.2.0  -->
+<!-- 2022-09-29T09:26:34 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="stat_7_1" pageWidth="1684" pageHeight="1190" orientation="Landscape" columnWidth="1684" leftMargin="0" rightMargin="0" topMargin="20" bottomMargin="20" whenResourceMissingType="Error" isIgnorePagination="true" uuid="4e4352f6-4aa8-47ca-9900-bfec8f7fe673">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<property name="net.sf.jasperreports.print.create.bookmarks" value="false"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="net.sf.jasperreports.export.xls.one.page.per.sheet" value="false"/>
+	<property name="net.sf.jasperreports.export.xls.white.page.backgroundФ" value="false"/>
+	<property name="net.sf.jasperreports.export.xls.remove.empty.space.between.rows" value="false"/>
+	<property name="net.sf.jasperreports.export.xls.remove.empty.space.between.columns" value="false"/>
+	<property name="net.sf.jasperreports.export.xls.detect.cell.type" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.freeze.row" value="0"/>
+	<property name="net.sf.jasperreports.exports.xls.font.size.fix.enabled" value="false"/>
+	<property name="net.sf.jasperreports.export.xls.force.page.breaks" value="true"/>
+	<property name="net.sf.jasperreports.page.break.no.pagination" value="apply"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<subDataset name="PARAMETERS_LIST" uuid="0432a849-4e5f-49b6-bd26-b107c6f6f1e2">
+		<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+		<parameter name="REPORT_PARAMETERS_LIST" class="java.lang.String"/>
+		<queryString language="plsql">
+			<![CDATA[SELECT unnest AS parameter
+  FROM unnest(string_to_array($P{REPORT_PARAMETERS_LIST}, ';'))]]>
+		</queryString>
+		<field name="PARAMETER" class="java.lang.String"/>
+	</subDataset>
+	<parameter name="DATE_FROM" class="java.lang.String"/>
+	<parameter name="DATE_TO" class="java.lang.String"/>
+	<parameter name="REPORT_NAME" class="java.lang.String"/>
+	<parameter name="REPORT_CODE" class="java.lang.String"/>
+	<parameter name="REPORT_PARAMETERS_LIST" class="java.lang.String"/>
+	<parameter name="SRV" class="java.lang.Integer"/>
+	<queryString language="plsql">
+		<![CDATA[SELECT row_number() over() as rn
+,t.oi_check_date
+,t.pat_f
+,t.pat_i
+,t.pat_o
+,t.pat_bd
+,t.pat_sex
+,t.pat_addr
+,t.snils
+,t.polis
+,t.cust
+,t.res_goal
+,t.pat_diag
+,t.cust_depart
+,t.value AS result
+,t.reestr
+--,(CASE WHEN length(substr(pat_phone,-10)) = 10 THEN substr(pat_phone,-10) ELSE NULL END) AS pat_phone
+,t.pat_phone as pat_phone
+,t.regdate
+,t.ids
+,t.oi_check_man
+,t.p_typ
+,t.p_ser
+,t.p_num
+,t.ct
+,t.date_in
+,t.finance
+,t.cust_code
+,t.oi_check_man_code
+,t.srv
+,t.srv_code
+,t.wr_text
+FROM (SELECT DISTINCT
+oi.id AS oi_id
+,p.keyid AS p_keyid
+,TO_CHAR(r.collectdate,'yyyy-mm-dd') AS date_in
+,TO_CHAR(oi.check_date, 'yyyy-mm-dd') AS oi_check_date
+,initcap(p.lastname) AS pat_f
+,initcap(p.firstname) AS pat_i
+,initcap(p.secondname) AS pat_o
+,TO_CHAR(p.birthdate,'yyyy-mm-dd') AS pat_bd
+,(case when p.sex = 0 then 1 when p.sex = 1 then 2 else null end) AS pat_sex
+,coalesce(pa.note, med.gsp_get_pat_address(p.keyid::bigINT, 1::SMALLINT, 0::SMALLINT),med.gsp_get_pat_address(p.keyid::bigINT, 2::SMALLINT, 0::SMALLINT)) AS pat_addr
+,p.snils
+,med.pkg_lab__get_customer(r.id::bigint,0::SMALLINT,1::SMALLINT) AS cust
+,(SELECT l.code FROM lab.lu l WHERE l.id = (SELECT coalesce(lu1.root_id, lu1.id) 
+   						FROM lab.lu lu1
+   						WHERE r.external_customer_id = lu1.id )) AS cust_code
+,trim(med.pkg_lab_report__get_pat_cond_by_research_id(r.id)) AS res_goal
+,trim(med.pkg_lab_report__get_pat_diagnos_by_research_id(r.id, 0::SMALLINT)) AS pat_diag
+,trim(med.pkg_lab_report__get_customer(r.id, 1)) AS cust_depart
+,LOWER(trim(rv.value)) AS value
+,NULL AS reestr
+,regexp_replace(coalesce(p.cellular,p.phone), '[^0-9]','', 'g') AS pat_phone
+,TO_CHAR(r.regdate, 'dd.mm.yyyy') AS regdate
+,r.ids AS ids
+,med.fn_man_short_by_id(oi.check_man_id) AS oi_check_man
+,med.fn_man_code_by_id(oi.check_man_id) AS oi_check_man_code
+,(SELECT text FROM med.lu lu WHERE lu.keyid = p.doc_id) AS p_typ
+,REPLACE(p.passser, ' ', '') AS p_ser
+,REPLACE(p.passnumb, ' ', '') AS p_num
+,(SELECT MAX(regexp_replace(rv2.value, '[^0-9\.,]', '', 'g')) FROM lab.result_value rv2, lab.result res2, lab.workresult wr2
+	WHERE res2.orderworkflow_id = owf.id
+	AND res2.id != res.id
+	AND rv2.result_id = res2.id
+	AND wr2.id = res2.workresult_id
+	AND UPPER(wr2.code) = 'CT'
+	AND rv2.active_status = 1
+	AND rv2.check_status = 1) AS ct
+,med.fn_get_agr_finance_name(a.keyid) AS finance
+,(SELECT sd.text FROM med.srvdep sd WHERE sd.keyid = oi.srvdep_id) AS srv
+,(SELECT sd.code FROM med.srvdep sd WHERE sd.keyid = oi.srvdep_id) AS srv_code
+,wr.text AS wr_text
+,(SELECT pol.code
+	FROM med.police pol
+	WHERE pol.patientid = r.patient_id
+	AND pol.keyid = (SELECT MAX(keyid) FROM med.police WHERE patientid = pol.patientid AND status = 1)) as polis
+
+FROM lab.research r 
+inner join lab.order_info oi 		on oi.research_id = r.id
+inner join lab.orderworkflow owf 	on owf.order_id = oi.id  
+inner join lab.result res 			on res.orderworkflow_id = owf.id 
+inner join lab.result_value rv 		on rv.result_id = res.id 
+inner join med.patient p 			on p.keyid = r.patient_id
+inner join med.agr a					on a.keyid = oi.agr_id
+inner join lab.workresult_value wrv	on rv.workresult_value_id = wrv.id
+inner join lab.workresult wr		on wr.id = wrv.workresult_id
+inner join lab.work w				on w.id = wr.work_id
+left join med.pat_address pa 		on p.keyid = pa.patientid and pa.tag =1 
+WHERE  r.root_id IS NOT NULL
+AND oi.root_id IS NOT NULL
+AND r.status IN ('R', 'F')
+AND owf.result_status IN (1, 2)
+AND res.active_status = 1
+AND rv.check_status = 1
+AND rv.deny_print_status = 0
+AND date_trunc('day', oi.check_date) BETWEEN to_date($P{DATE_FROM}, 'yyyy-mm-dd hh24:mi:ss') AND coalesce(
+         to_date($P{DATE_TO}, 'yyyy-mm-dd hh24:mi:ss'), current_date)
+AND (oi.srvdep_id IN (SELECT  a3.linkid
+  		    FROM med.attr a1
+    			,med.attr a2
+    			,med.attr a3
+		    WHERE a1.keyid = a2.rootid
+   		    AND a2.keyid = a3.rootid
+		    AND a2.code = 1
+  		    AND a1.code = 9910
+  		    AND a1.tag = 4)
+    OR oi.srvdep_id = $P{SRV}::BIGINT)
+ORDER BY oi_check_date)t
+WHERE t.value LIKE 'отрицат%' OR t.value LIKE 'не%обнаруж%'
+OR t.value LIKE 'положит%' OR t.value LIKE 'обнаруж%']]>
+	</queryString>
+	<field name="RN" class="java.lang.Integer"/>
+	<field name="PAT_F" class="java.lang.String"/>
+	<field name="PAT_I" class="java.lang.String"/>
+	<field name="PAT_O" class="java.lang.String"/>
+	<field name="PAT_BD" class="java.lang.String"/>
+	<field name="PAT_SEX" class="java.lang.String"/>
+	<field name="DATE_IN" class="java.lang.String"/>
+	<field name="OI_CHECK_DATE" class="java.lang.String"/>
+	<field name="CUST" class="java.lang.String"/>
+	<field name="IDS" class="java.lang.String"/>
+	<field name="FINANCE" class="java.lang.String"/>
+	<field name="CUST_CODE" class="java.lang.String"/>
+	<field name="RESULT" class="java.lang.String"/>
+	<field name="OI_CHECK_MAN" class="java.lang.String"/>
+	<field name="OI_CHECK_MAN_CODE" class="java.lang.String"/>
+	<field name="SRV" class="java.lang.String"/>
+	<field name="SRV_CODE" class="java.lang.String"/>
+	<field name="WR_TEXT" class="java.lang.String"/>
+	<field name="P_NUM" class="java.lang.String"/>
+	<field name="P_SER" class="java.lang.String"/>
+	<field name="SNILS" class="java.lang.String"/>
+	<field name="POLIS" class="java.lang.String"/>
+	<pageHeader>
+		<band height="40" splitType="Prevent">
+			<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.HorizontalRowLayout"/>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="0" y="0" width="1684" height="20" uuid="33ca7fe8-894f-47cf-9d0e-86c8baec46a7"/>
+				<box>
+					<topPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.0"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font fontName="DejaVu Sans" size="11" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{REPORT_NAME}]]></textFieldExpression>
+			</textField>
+			<componentElement>
+				<reportElement stretchType="RelativeToBandHeight" x="0" y="20" width="1684" height="20" uuid="a50648e0-95e3-4be9-a399-c415a48c9b4b">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="net.sf.jasperreports.export.headertoolbar.table.name" value=""/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.CONTENTS.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.CONTENTS.width" value="pixel"/>
+				</reportElement>
+				<jr:list xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" printOrder="Vertical">
+					<datasetRun subDataset="PARAMETERS_LIST" uuid="81291252-9166-4ad7-afbf-570c0c6f1a19">
+						<datasetParameter name="ORACLE_REF_CURSOR">
+							<datasetParameterExpression><![CDATA[$P{ORACLE_REF_CURSOR}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="REPORT_PARAMETERS_LIST">
+							<datasetParameterExpression><![CDATA[$P{REPORT_PARAMETERS_LIST}]]></datasetParameterExpression>
+						</datasetParameter>
+						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					</datasetRun>
+					<jr:listContents height="20" width="1684">
+						<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+							<reportElement stretchType="RelativeToBandHeight" x="0" y="0" width="1684" height="15" uuid="7701e551-5f58-4b97-ba71-8d0fcebba514">
+								<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+								<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+							</reportElement>
+							<textElement verticalAlignment="Middle">
+								<font fontName="DejaVu Sans" size="9"/>
+							</textElement>
+							<textFieldExpression><![CDATA[$F{PARAMETER}]]></textFieldExpression>
+						</textField>
+					</jr:listContents>
+				</jr:list>
+			</componentElement>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="89">
+			<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.HorizontalRowLayout"/>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="0" width="88" height="89" forecolor="#000000" backcolor="#FFFFFF" uuid="9d1a185c-95e6-42b3-9d47-e777411b8158">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[№ п/п]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="88" y="0" width="76" height="89" forecolor="#000000" backcolor="#FFFFFF" uuid="1d0d78d9-65ba-41c1-88b6-478b0f56a4c0">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Фамилия]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="164" y="0" width="76" height="89" forecolor="#000000" backcolor="#FFFFFF" uuid="b74fbf29-06b7-4f76-9e2f-48cd9895bf13">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Имя]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="240" y="0" width="76" height="89" forecolor="#000000" backcolor="#FFFFFF" uuid="030b6b25-a488-46ae-941a-f72f96e5ac4e">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Отчество]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="316" y="0" width="76" height="89" forecolor="#000000" backcolor="#FFFFFF" uuid="446c70ac-d880-43d5-bc5f-29a3a20acf2d">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Дата рождения]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="392" y="0" width="76" height="89" forecolor="#000000" backcolor="#FFFFFF" uuid="e810cba3-3fa0-476a-acd8-c2ef7e917b59">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Пол]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="468" y="0" width="76" height="89" forecolor="#000000" backcolor="#FFFFFF" uuid="4d576633-e8d5-4d87-a03c-6a1db9cad534">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Дата забора]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="544" y="0" width="76" height="89" forecolor="#000000" backcolor="#FFFFFF" uuid="92556970-3c87-46fd-a516-9209764f64a6">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Дата одобрения]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="620" y="0" width="76" height="89" forecolor="#000000" backcolor="#FFFFFF" uuid="52700f44-74f1-437f-9ff1-c546bbf2f8f5">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Контрагент]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="696" y="0" width="76" height="89" forecolor="#000000" backcolor="#FFFFFF" uuid="2b2b21db-c81f-4179-bb9d-83fd7235c6df">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[№ пробы (IDS)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="772" y="0" width="76" height="89" forecolor="#000000" backcolor="#FFFFFF" uuid="e01e2630-1350-4bfc-bf24-619b82e1b741">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Источник заказа]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="848" y="0" width="76" height="89" forecolor="#000000" backcolor="#FFFFFF" uuid="c42a4cd2-1026-4d18-aaa2-e41d00a8fd0e">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Код МО]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="924" y="0" width="76" height="89" forecolor="#000000" backcolor="#FFFFFF" uuid="f9fe0110-0e7d-4967-ac8b-8e184206d269">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Тест]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="1000" y="0" width="76" height="89" forecolor="#000000" backcolor="#FFFFFF" uuid="ec2d1241-b608-4001-b2b3-dd9c7a1aba25">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Врач одобривший анализ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="1076" y="0" width="76" height="89" forecolor="#000000" backcolor="#FFFFFF" uuid="74028f74-1c20-44a4-adb2-bb37339f170b">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Код врача]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="1152" y="0" width="76" height="89" forecolor="#000000" backcolor="#FFFFFF" uuid="3c16a892-3c38-4aa6-8634-6e18ca38c74f">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Услуга наименование]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="1228" y="0" width="76" height="89" forecolor="#000000" backcolor="#FFFFFF" uuid="11ffbf56-258f-40ea-a726-e15d78c275ae">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Услуга код]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="1304" y="0" width="76" height="89" forecolor="#000000" backcolor="#FFFFFF" uuid="f078c9e8-17c0-4870-a8f2-94759e956743">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Название теста]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="1380" y="0" width="76" height="89" forecolor="#000000" backcolor="#FFFFFF" uuid="6f5e7fd2-0016-44ae-a908-841a7b19794a">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[ДУЛ номер]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="1456" y="0" width="76" height="89" forecolor="#000000" backcolor="#FFFFFF" uuid="f41eebe4-1a12-4f77-9b26-7e405934744e">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[ДУЛ серия]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="1532" y="0" width="76" height="89" forecolor="#000000" backcolor="#FFFFFF" uuid="af11321f-5b72-4e8b-91de-010953c3989a">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[СНИЛС]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="1608" y="0" width="76" height="89" forecolor="#000000" backcolor="#FFFFFF" uuid="280ce477-0121-4b66-a731-345c796c8fb8">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[ПОЛИС]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="19" splitType="Prevent">
+			<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.HorizontalRowLayout"/>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="0" y="0" width="88" height="19" uuid="8b6ede0e-7195-428a-b54c-377b2f02537f">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="net.sf.jasperreports.export.xls.auto.fit.row" value="true"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{RN}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="88" y="0" width="76" height="19" uuid="696f020d-3061-4f82-9e29-5b852cdf1557">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="net.sf.jasperreports.export.xls.auto.fit.row" value="true"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{PAT_F}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="164" y="0" width="76" height="19" uuid="f4a2ef92-c0b5-4236-a1d4-7f726e23db9c">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="net.sf.jasperreports.export.xls.auto.fit.row" value="true"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{PAT_I}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="240" y="0" width="76" height="19" uuid="69c2cfd3-b393-47f8-8863-843e430ec0c8">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="net.sf.jasperreports.export.xls.auto.fit.row" value="true"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{PAT_O}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="316" y="0" width="76" height="19" uuid="850ea2c1-1c61-4005-9d9c-6f66c9a1a8a0">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="net.sf.jasperreports.export.xls.auto.fit.row" value="true"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{PAT_BD}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="392" y="0" width="76" height="19" uuid="72cc6f6c-d58f-44b0-861d-a15a7c291e1a">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="net.sf.jasperreports.export.xls.auto.fit.row" value="true"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{PAT_SEX}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="468" y="0" width="76" height="19" uuid="c2a7107a-397e-440b-a04f-d0df4dc44069">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="net.sf.jasperreports.export.xls.auto.fit.row" value="true"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{DATE_IN}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="544" y="0" width="76" height="19" uuid="46d32aa2-3a04-4fe1-b845-ffac5cbd0d45">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="net.sf.jasperreports.export.xls.auto.fit.row" value="true"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{OI_CHECK_DATE}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="620" y="0" width="76" height="19" uuid="484dff3d-0057-42a5-b4b3-8c35ef057d64">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="net.sf.jasperreports.export.xls.auto.fit.row" value="true"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{CUST}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="696" y="0" width="76" height="19" uuid="a4b5a507-6a5a-4a68-8ece-1497c51a342f">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="net.sf.jasperreports.export.xls.auto.fit.row" value="true"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{IDS}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="772" y="0" width="76" height="19" uuid="5f362346-dd0e-466d-8e4f-eccdd74de74f">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="net.sf.jasperreports.export.xls.auto.fit.row" value="true"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{FINANCE}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="848" y="0" width="76" height="19" uuid="b6ca840b-0b0e-492c-ac04-a5228260f6fd">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="net.sf.jasperreports.export.xls.auto.fit.row" value="true"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{CUST_CODE}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="924" y="0" width="76" height="19" uuid="57d65a85-2156-481f-8e97-e7e36136abf1">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="net.sf.jasperreports.export.xls.auto.fit.row" value="true"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{RESULT}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="1000" y="0" width="76" height="19" uuid="59244fce-ec0e-42d0-9297-913aa64d5299">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="net.sf.jasperreports.export.xls.auto.fit.row" value="true"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{OI_CHECK_MAN}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="1076" y="0" width="76" height="19" uuid="cc598742-2aaf-4307-bac0-9a1f0dbde256">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="net.sf.jasperreports.export.xls.auto.fit.row" value="true"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{OI_CHECK_MAN_CODE}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="1152" y="0" width="76" height="19" uuid="306f7fa1-35d9-4550-b461-1661749bc21c">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="net.sf.jasperreports.export.xls.auto.fit.row" value="true"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{SRV}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="1228" y="0" width="76" height="19" uuid="2a8d8d69-27c6-4d61-8c5e-d9a90aabf03a">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="net.sf.jasperreports.export.xls.auto.fit.row" value="true"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{SRV_CODE}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="1304" y="0" width="76" height="19" uuid="ddff8e86-0ba0-4bac-bd57-4c94e3a9993e">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="net.sf.jasperreports.export.xls.auto.fit.row" value="true"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{WR_TEXT}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="1380" y="0" width="76" height="19" uuid="1ffd5782-d41a-4cfb-b3bb-59ce0315044a">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="net.sf.jasperreports.export.xls.auto.fit.row" value="true"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{P_NUM}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="1456" y="0" width="76" height="19" uuid="ba5dfc1d-51b3-45f2-a9b7-9cff65e06a2e">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="net.sf.jasperreports.export.xls.auto.fit.row" value="true"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{P_SER}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="1532" y="0" width="76" height="19" uuid="0eda0071-bb72-4655-8b0b-ef9ef2b664ed">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="net.sf.jasperreports.export.xls.auto.fit.row" value="true"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{SNILS}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="1608" y="0" width="76" height="19" uuid="f6c3f4ae-05f4-442b-a628-9cd8b6d7a650">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="net.sf.jasperreports.export.xls.auto.fit.row" value="true"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{POLIS}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

@@ -1,0 +1,447 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.2.0.final using JasperReports Library version 6.2.0  -->
+<!-- 2022-08-25T22:14:16 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="stat_7_1" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" isIgnorePagination="true" uuid="4e4352f6-4aa8-47ca-9900-bfec8f7fe673">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<property name="net.sf.jasperreports.print.create.bookmarks" value="false"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="net.sf.jasperreports.export.xls.one.page.per.sheet" value="false"/>
+	<property name="net.sf.jasperreports.export.xls.white.page.background" value="false"/>
+	<property name="net.sf.jasperreports.export.xls.remove.empty.space.between.rows" value="false"/>
+	<property name="net.sf.jasperreports.export.xls.remove.empty.space.between.columns" value="false"/>
+	<property name="net.sf.jasperreports.export.xls.detect.cell.type" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.freeze.row" value="0"/>
+	<property name="net.sf.jasperreports.exports.xls.font.size.fix.enabled" value="false"/>
+	<property name="net.sf.jasperreports.export.xls.force.page.breaks" value="true"/>
+	<property name="net.sf.jasperreports.page.break.no.pagination" value="apply"/>
+	<subDataset name="PARAMETERS_LIST" uuid="0432a849-4e5f-49b6-bd26-b107c6f6f1e2">
+		<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+		<parameter name="REPORT_PARAMETERS_LIST" class="java.lang.String"/>
+		<queryString language="plsql">
+			<![CDATA[SELECT unnest AS parameter
+  FROM unnest(string_to_array($P{REPORT_PARAMETERS_LIST}, ';'))]]>
+		</queryString>
+		<field name="PARAMETER" class="java.lang.String"/>
+	</subDataset>
+	<parameter name="DATE_FROM" class="java.lang.String"/>
+	<parameter name="DATE_TO" class="java.lang.String"/>
+	<parameter name="REPORT_NAME" class="java.lang.String"/>
+	<parameter name="REPORT_CODE" class="java.lang.String"/>
+	<parameter name="REPORT_PARAMETERS_LIST" class="java.lang.String"/>
+	<queryString language="plsql">
+		<![CDATA[SELECT ROWNUM AS rn
+,t.oi_check_date
+,t.pat_f
+,t.pat_i
+,t.pat_o
+,t.pat_bd
+,t.pat_sex
+,substr(t.pat_addr,instr(t.pat_addr,',',1,1)+1,instr(t.pat_addr,',',1,2)-instr(t.pat_addr,',',1,1)-1) AS town
+,t.pat_addr
+,t.snils
+,NULL AS polis
+,t.cust
+,t.res_goal
+,t.pat_diag
+,t.cust_depart
+,(CASE
+WHEN t.value LIKE 'отрицат%' OR t.value LIKE 'не%обнаруж%' THEN '1'
+WHEN t.value LIKE 'положит%' OR t.value LIKE 'обнаруж%' THEN '2'
+--WHEN t.value LIKE 'сомнит%' THEN '5'
+ELSE '0' END) AS result
+,t.reestr
+--,t.pat_phone
+,(CASE
+WHEN t.pat_addr IS NOT NULL AND pat_phone IS NOT NULL THEN t.pat_addr || ',' || (CASE WHEN length(substr(pat_phone,-10)) = 10 THEN substr(pat_phone,-10) ELSE NULL END)
+WHEN t.pat_addr IS NOT NULL  THEN t.pat_addr
+ELSE (CASE WHEN length(substr(pat_phone,-10)) = 10 THEN substr(pat_phone,-10) ELSE NULL END) END) AS pat_phone_addr
+,regdate
+,ids
+,oi_check_man
+,p_typ
+,p_ser
+,p_num
+,ct
+,'' AS num_prot
+,t.date_in
+,t.taking_date
+,t.full_fio
+,t.res_date
+,t.lstwp
+,(CASE
+WHEN t.cust = t.cust_depart THEN t.cust
+WHEN t.cust IS NOT NULL AND t.cust_depart IS NOT NULL THEN t.cust || ',' || t.cust_depart
+WHEN t.cust IS NOT NULL THEN t.cust
+ELSE t.cust_depart END) AS ful_cust
+,'' AS vac_inf
+,'' AS abroad_inf
+
+FROM (SELECT DISTINCT
+oi.id AS oi_id
+--,oi.srvdep_id AS oi_srvdep_id
+--,oi.check_date AS oi_check_date
+,p.keyid AS p_keyid
+,TO_CHAR(r.collectdate,'dd.mm.yyyy') AS taking_date
+,TO_CHAR(NVL(r.delivery_date,r.collectdate)) AS date_in
+,TO_CHAR(oi.check_date, 'dd.mm.yyyy') AS oi_check_date
+,TO_CHAR(r.result_date, 'dd.mm.yyyy') AS res_date
+,p.lastwrkplace AS lstwp
+--,initcap(concat(p.lastname,' ',p.firstname,' ',p.secondname)) AS pat_fio
+,p_pat.fio(p.keyid) AS full_fio
+,initcap(p.lastname) AS pat_f
+,initcap(p.firstname) AS pat_i
+,initcap(p.secondname) AS pat_o
+,TO_CHAR(p.birthdate,'dd.mm.yyyy') AS pat_bd
+,decode(p.sex,0,1,1,2) AS pat_sex
+,coalesce(trim(p.addrnote),solution_med.gsp_get_pat_address(p.keyid, 1, 0),solution_med.gsp_get_pat_address(p.keyid, 2, 0)) AS pat_addr
+--,p_pat.passport(p.keyid,1) AS pat_doc
+,p.snils
+,p_lab.get_customer(r.id,0,1) AS cust
+,trim(p_lab_report.get_pat_cond_by_research_id(r.id)) AS res_goal
+,trim(p_lab_report.get_pat_diagnos_by_research_id(r.id, 0)) AS pat_diag
+,trim(p_lab_report.get_customer(r.id, 1)) AS cust_depart
+,LOWER(trim(rv.value)) AS value
+--,'' AS pat_work
+,NULL AS reestr
+,regexp_replace(coalesce(p.cellular,p.phone), '[^0-9]') AS pat_phone
+,TO_CHAR(r.regdate, 'dd.mm.yyyy') AS regdate
+,r.ids AS ids
+,fn_man_short_by_id(oi.check_man_id) AS oi_check_man
+,(SELECT lu.text FROM lu lu WHERE lu.keyid = p.doc_id) AS p_typ
+,REPLACE(p.passser, ' ') AS p_ser
+,REPLACE(p.passnumb, ' ') AS p_num
+,(SELECT MAX(regexp_replace(rv2.value, '[^0-9\.,]')) FROM solution_lab.result_value rv2, solution_lab.result res2, solution_lab.workresult wr2
+	WHERE res2.orderworkflow_id = owf.id
+	AND res2.id != res.id
+	AND rv2.result_id = res2.id
+	AND wr2.id = res2.workresult_id
+	AND UPPER(wr2.code) = 'CT'
+	AND rv2.active_status = 1
+	AND rv2.check_status = 1) AS ct
+FROM solution_lab.research r 
+,solution_lab.order_info oi 
+,solution_lab.orderworkflow owf 
+,solution_lab.result res 
+,solution_lab.result_value rv 
+,solution_med.patient p
+WHERE oi.research_id = r.id
+AND owf.order_id = oi.id 
+AND res.orderworkflow_id = owf.id 
+AND rv.result_id = res.id 
+AND p.keyid = r.patient_id
+AND r.root_id IS NOT NULL
+AND oi.root_id IS NOT NULL
+AND r.status IN ('R', 'F')
+AND owf.result_status IN (1, 2)
+AND res.active_status = 1
+AND rv.check_status = 1
+AND rv.deny_print_status = 0
+AND TRUNC(oi.check_date) BETWEEN :DATE_FROM AND :DATE_TO
+AND (oi.srvdep_id IN (SELECT  a3.linkid
+  		    FROM attr a1
+    			,attr a2
+    			,attr a3
+		    WHERE a1.keyid = a2.rootid
+   		    AND a2.keyid = a3.rootid
+		    AND a2.code = 1
+  		    AND a1.code = 9910
+  		    AND a1.tag = 4)
+    OR oi.srvdep_id IN (:SRV))
+ORDER BY oi_check_date) t
+WHERE t.value LIKE 'положит%' OR t.value LIKE 'обнаруж%'
+/* OR t.value LIKE 'сомнит%' */]]>
+	</queryString>
+	<field name="RN" class="java.lang.Integer"/>
+	<field name="NUM_PROT" class="java.lang.Integer"/>
+	<field name="IDS" class="java.lang.Integer"/>
+	<field name="TAKING_DATE" class="java.lang.String"/>
+	<field name="DATE_IN" class="java.lang.String"/>
+	<field name="FULL_FIO" class="java.lang.String"/>
+	<field name="PAT_BD" class="java.lang.String"/>
+	<field name="PAT_PHONE_ADDR" class="java.lang.String"/>
+	<field name="FUL_CUST" class="java.lang.String"/>
+	<field name="PAT_DIAG" class="java.lang.String"/>
+	<field name="LSTWP" class="java.lang.String"/>
+	<field name="VAC_INF" class="java.lang.String"/>
+	<field name="ABROAD_INF" class="java.lang.String"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="40" splitType="Prevent">
+			<textField isStretchWithOverflow="true">
+				<reportElement x="0" y="0" width="802" height="20" uuid="33ca7fe8-894f-47cf-9d0e-86c8baec46a7">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.0"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font fontName="DejaVu Sans" size="11" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{REPORT_NAME}]]></textFieldExpression>
+			</textField>
+			<componentElement>
+				<reportElement stretchType="RelativeToBandHeight" x="0" y="20" width="802" height="15" uuid="a50648e0-95e3-4be9-a399-c415a48c9b4b">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<jr:list xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" printOrder="Vertical">
+					<datasetRun subDataset="PARAMETERS_LIST" uuid="81291252-9166-4ad7-afbf-570c0c6f1a19">
+						<datasetParameter name="ORACLE_REF_CURSOR">
+							<datasetParameterExpression><![CDATA[$P{ORACLE_REF_CURSOR}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="REPORT_PARAMETERS_LIST">
+							<datasetParameterExpression><![CDATA[$P{REPORT_PARAMETERS_LIST}]]></datasetParameterExpression>
+						</datasetParameter>
+						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					</datasetRun>
+					<jr:listContents height="15" width="802">
+						<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+							<reportElement stretchType="RelativeToBandHeight" x="0" y="0" width="555" height="15" uuid="7701e551-5f58-4b97-ba71-8d0fcebba514">
+								<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+								<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+							</reportElement>
+							<textElement verticalAlignment="Middle">
+								<font fontName="DejaVu Sans" size="9"/>
+							</textElement>
+							<textFieldExpression><![CDATA[$F{PARAMETER}]]></textFieldExpression>
+						</textField>
+					</jr:listContents>
+				</jr:list>
+			</componentElement>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="84">
+			<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.HorizontalRowLayout"/>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="0" width="40" height="84" forecolor="#000000" backcolor="#FFFFFF" uuid="9d1a185c-95e6-42b3-9d47-e777411b8158">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.6" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[№ п/п]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="40" y="0" width="82" height="84" forecolor="#000000" backcolor="#FFFFFF" uuid="1d0d78d9-65ba-41c1-88b6-478b0f56a4c0">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.6" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[№ в реестре положительных]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="122" y="0" width="48" height="84" forecolor="#000000" backcolor="#FFFFFF" uuid="b74fbf29-06b7-4f76-9e2f-48cd9895bf13">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.6" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Код пробы]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="170" y="0" width="50" height="84" forecolor="#000000" backcolor="#FFFFFF" uuid="030b6b25-a488-46ae-941a-f72f96e5ac4e">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.6" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Дата отбора]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="220" y="0" width="68" height="84" forecolor="#000000" backcolor="#FFFFFF" uuid="446c70ac-d880-43d5-bc5f-29a3a20acf2d">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.6" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Дата доставки в лабораторию]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="288" y="0" width="55" height="84" forecolor="#000000" backcolor="#FFFFFF" uuid="e810cba3-3fa0-476a-acd8-c2ef7e917b59">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.6" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[ФИО]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="343" y="0" width="55" height="84" forecolor="#000000" backcolor="#FFFFFF" uuid="4d576633-e8d5-4d87-a03c-6a1db9cad534">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.6" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Дата рождения]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="398" y="0" width="66" height="84" forecolor="#000000" backcolor="#FFFFFF" uuid="92556970-3c87-46fd-a516-9209764f64a6">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.6" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Адрес проживания, номер телефона]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="464" y="0" width="73" height="84" forecolor="#000000" backcolor="#FFFFFF" uuid="52700f44-74f1-437f-9ff1-c546bbf2f8f5">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.6" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Направившее учреждение (проводившее отбор)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="537" y="0" width="55" height="84" forecolor="#000000" backcolor="#FFFFFF" uuid="2b2b21db-c81f-4179-bb9d-83fd7235c6df">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.6" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Диагноз]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="592" y="0" width="61" height="84" forecolor="#000000" backcolor="#FFFFFF" uuid="e01e2630-1350-4bfc-bf24-619b82e1b741">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.6" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Место работы, обучения, орг-ции соц.сферы и т.д.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="653" y="0" width="63" height="84" forecolor="#000000" backcolor="#FFFFFF" uuid="c42a4cd2-1026-4d18-aaa2-e41d00a8fd0e">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.6" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Данные о вакцинации]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" mode="Opaque" x="716" y="0" width="86" height="84" forecolor="#000000" backcolor="#FFFFFF" uuid="f9fe0110-0e7d-4967-ac8b-8e184206d269">
+					<property name="net.sf.jasperreports.export.xls.freeze.row.edge" value="Bottom"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.6" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isItalic="true"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<text><![CDATA[Если выезжал за пределы РФ, указать страну и когда вернулся]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="14" splitType="Prevent">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="0" y="0" width="90" height="14" uuid="8b6ede0e-7195-428a-b54c-377b2f02537f">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="net.sf.jasperreports.export.xls.auto.fit.row" value="true"/>
+				</reportElement>
+				<box>
+					<leftPen lineWidth="0.0" lineColor="#8C8C8C"/>
+					<bottomPen lineWidth="0.6" lineColor="#8C8C8C"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9"/>
+					<paragraph leftIndent="2" rightIndent="2"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{CODE}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<summary>
+		<band>
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+		</band>
+	</summary>
+</jasperReport>

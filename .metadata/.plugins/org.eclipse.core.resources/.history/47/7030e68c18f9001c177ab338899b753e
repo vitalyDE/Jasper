@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.2.0.final using JasperReports Library version 6.2.0  -->
+<!-- 2022-07-01T13:33:57 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="attaches" pageWidth="595" pageHeight="822" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="b00d837f-6048-470c-b62e-62ec6bca1706">
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<subDataset name="DatasetWithImages" uuid="5f926052-7acc-4955-bc7b-5721a56ce39c">
+		<field name="pageImage" class="java.awt.image.BufferedImage"/>
+	</subDataset>
+	<parameter name="ROOT_REPORT_PATH" class="java.lang.String"/>
+	<parameter name="RESEARCH_ID" class="java.lang.String"/>
+	<queryString language="plsql">
+		<![CDATA[SELECT wr_text as name
+            , data as content
+            , null as pageImage
+  FROM TABLE(p_lab_result.get_lab_result_attaches($P{RESEARCH_ID}))
+WHERE entity_type = 'doc'
+ORDER BY image_id]]>
+	</queryString>
+	<field name="name" class="java.lang.String"/>
+	<field name="content" class="java.sql.Blob"/>
+	<field name="pageImage" class="java.awt.image.BufferedImage"/>
+	<detail>
+		<band height="822" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<componentElement>
+				<reportElement x="0" y="0" width="595" height="822" uuid="512bd7cc-dabc-4a5c-912f-6e0410f80d4a">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<jr:list xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" printOrder="Vertical">
+					<datasetRun subDataset="DatasetWithImages" uuid="51d00f42-7960-4517-ac1a-8b8aa46ce58a">
+						<dataSourceExpression><![CDATA[]]></dataSourceExpression>
+					</datasetRun>
+					<jr:listContents height="822" width="595">
+						<image scaleImage="RealSize">
+							<reportElement x="0" y="0" width="595" height="822" uuid="b2da1a6a-27d6-47d7-a61a-c189c8b90653">
+								<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+							</reportElement>
+							<imageExpression><![CDATA[$F{pageImage}]]></imageExpression>
+						</image>
+					</jr:listContents>
+				</jr:list>
+			</componentElement>
+		</band>
+	</detail>
+</jasperReport>

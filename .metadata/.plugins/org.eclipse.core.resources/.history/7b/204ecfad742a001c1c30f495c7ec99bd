@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.2.0.final using JasperReports Library version 6.2.0  -->
+<!-- 2021-10-11T14:21:56 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="footer" pageWidth="550" pageHeight="700" whenNoDataType="AllSectionsNoDetail" columnWidth="550" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" isSummaryWithPageHeaderAndFooter="true" uuid="b00d837f-6048-470c-b62e-62ec6bca1706">
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<subDataset name="DatasetWithImages" uuid="5f926052-7acc-4955-bc7b-5721a56ce39c">
+		<field name="pageImage" class="java.awt.image.BufferedImage"/>
+	</subDataset>
+	<parameter name="ROOT_REPORT_PATH" class="java.lang.String"/>
+	<parameter name="PRINT_STAMPS" class="java.lang.String"/>
+	<parameter name="VERIFIERS" class="java.lang.String">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+	</parameter>
+	<parameter name="DOCUMENTS" class="java.lang.String"/>
+	<queryString language="plsql">
+		<![CDATA[WITH tab AS
+ (SELECT rownum rn
+               ,column_value
+    FROM TABLE(p_collections.string_to_table_of_id($P{DOCUMENTS})))
+select doc.filename
+           ,doc.content
+           ,null as pageImage
+  FROM solution_data.documents doc
+             , tab t
+ where doc.id = t.column_value
+      and doc.tag = 9
+      and doc.status = 1
+      and lower(filename) like '%.pdf'
+order by rn]]>
+	</queryString>
+	<field name="content" class="java.sql.Blob"/>
+	<field name="pageImage" class="java.awt.image.BufferedImage"/>
+	<title>
+		<band splitType="Prevent">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<printWhenExpression><![CDATA[EQUALS($P{PRINT_STAMPS},"1")]]></printWhenExpression>
+			<subreport overflowType="Stretch">
+				<reportElement isPrintRepeatedValues="false" x="80" y="0" width="320" height="0" isRemoveLineWhenBlank="true" uuid="70fd2cfb-4a69-4afd-ae09-8feb416c266b">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<subreportParameter name="ROOT_REPORT_PATH">
+					<subreportParameterExpression><![CDATA[$P{ROOT_REPORT_PATH}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="VERIFIERS">
+					<subreportParameterExpression><![CDATA[$P{VERIFIERS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/signatures.jasper"]]></subreportExpression>
+			</subreport>
+			<subreport overflowType="Stretch">
+				<reportElement isPrintRepeatedValues="false" x="420" y="0" width="100" height="0" isRemoveLineWhenBlank="true" uuid="0d136ad9-d590-4d8a-85eb-7247ec035f46">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<printWhenExpression><![CDATA[new File($P{ROOT_REPORT_PATH} + "/../static/stamp.png").exists() == true]]></printWhenExpression>
+				</reportElement>
+				<subreportParameter name="ROOT_REPORT_PATH">
+					<subreportParameterExpression><![CDATA[$P{ROOT_REPORT_PATH}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/stamp.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</title>
+	<detail>
+		<band>
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<printWhenExpression><![CDATA[$P{DOCUMENTS} != null]]></printWhenExpression>
+			<componentElement>
+				<reportElement x="0" y="0" width="550" height="0" uuid="b84da859-24e5-4870-899c-960f5e7f874d">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="net.sf.jasperreports.export.headertoolbar.table.name" value="ATTACHMENTS"/>
+				</reportElement>
+				<jr:list xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" printOrder="Vertical">
+					<datasetRun subDataset="DatasetWithImages" uuid="4def7f3d-d845-4513-a56e-d6ce866a9b02"/>
+					<jr:listContents height="0" width="550">
+						<image scaleImage="RealSize" onErrorType="Blank">
+							<reportElement x="0" y="0" width="550" height="0" uuid="9ed4e2b0-c23c-4128-bf00-1eff15b6ed28">
+								<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+							</reportElement>
+							<imageExpression><![CDATA[$F{pageImage}]]></imageExpression>
+						</image>
+					</jr:listContents>
+				</jr:list>
+			</componentElement>
+		</band>
+	</detail>
+</jasperReport>

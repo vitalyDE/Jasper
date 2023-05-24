@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.2.0.final using JasperReports Library version 6.2.0  -->
+<!-- 2022-04-05T22:37:59 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="lpu" pageWidth="555" pageHeight="842" whenNoDataType="BlankPage" columnWidth="555" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="1441f28b-7d07-4345-9ab0-29ec37bc3a8e">
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="A0005"/>
+	<parameter name="ROOT_REPORT_PATH" class="java.lang.String"/>
+	<queryString language="plsql">
+		<![CDATA[select nvl(nvl(printtext,text),'Клинико-диагностическая лаборатория') as TEXT
+     , ADDRESS_FACT AS ADDRS
+  FROM V_THIS_LPU_DATA]]>
+	</queryString>
+	<field name="TEXT" class="java.lang.String"/>
+	<field name="ADDRS" class="java.lang.String"/>
+	<detail>
+		<band height="60" splitType="Stretch">
+			<image onErrorType="Blank">
+				<reportElement x="30" y="0" width="130" height="60" uuid="617eedf3-d473-4a14-88f0-f5951c167b08">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<imageExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/logo.png"]]></imageExpression>
+			</image>
+			<staticText>
+				<reportElement x="175" y="0" width="375" height="28" uuid="2f4add41-1059-47ad-81ee-36a9ca5cf344"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[МАУ "ГКБ №14"]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="175" y="28" width="375" height="32" uuid="29d3a980-b4ff-4141-94e8-e317020d7acf"/>
+				<textElement textAlignment="Center">
+					<font fontName="DejaVu Sans" size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[ИНН 6663020620, КПП  668601001, ОГРН 1036604789759
+Лицензия №ЛО-66-01-005650, выданная МЗСО 26.10.2018.
+620039, СВЕРДЛОВСКАЯ ОБЛ, ЕКАТЕРИНБУРГ Г, 22 ПАРТСЪЕЗДА УЛ, 15, А]]></text>
+			</staticText>
+		</band>
+	</detail>
+</jasperReport>

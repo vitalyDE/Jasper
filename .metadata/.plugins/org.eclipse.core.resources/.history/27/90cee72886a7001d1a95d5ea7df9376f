@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.2.0.final using JasperReports Library version 6.2.0  -->
+<!-- 2022-07-20T15:52:59 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="main" pageWidth="595" pageHeight="842" sectionType="Part" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="30" bottomMargin="30" uuid="d2716064-8ae4-40cf-a575-33afba400e3a">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<property name="net.sf.jasperreports.print.create.bookmarks" value="true"/>
+	<property name="com.jaspersoft.studio.book.group.cover.header" value="Cover and Table of Contents"/>
+	<property name="com.jaspersoft.studio.book.group.cover.footer" value="Backcover"/>
+	<parameter name="RESEARCH_ID" class="java.lang.String"/>
+	<parameter name="ROOT_REPORT_PATH" class="java.lang.String"/>
+	<parameter name="PRINT_STAMPS" class="java.lang.String">
+		<defaultValueExpression><![CDATA["1"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="DOCTOR_SERIAL_NUMBER" class="java.lang.String"/>
+	<parameter name="DOCTOR_SURNAME" class="java.lang.String"/>
+	<parameter name="DOCTOR_FORENAME_PATRONYMIC" class="java.lang.String"/>
+	<parameter name="DOCTOR_VALID_FROM" class="java.lang.String"/>
+	<parameter name="DOCTOR_VALID_TO" class="java.lang.String"/>
+	<parameter name="ORG_SERIAL_NUMBER" class="java.lang.String"/>
+	<parameter name="ORG_SURNAME" class="java.lang.String"/>
+	<parameter name="ORG_FORENAME_PATRONYMIC" class="java.lang.String"/>
+	<parameter name="ORG_VALID_FROM" class="java.lang.String"/>
+	<parameter name="ORG_VALID_TO" class="java.lang.String"/>
+	<queryString language="plsql">
+		<![CDATA[  WITH tab AS (
+    SELECT row_number() OVER () AS rn
+         , column_value
+      FROM unnest(string_to_array($P{RESEARCH_ID}, ',')::BIGINT[]) AS column_value
+  )
+SELECT string_agg(r.id::VARCHAR, ', ' ORDER BY rn) AS research_ids
+     , min(t.rn)                                   AS pat_grp_rn
+     , 0                                           AS is_print_eng
+  FROM lab.research r
+     , tab t
+ WHERE (r.root_id = column_value OR (r.id = column_value AND r.root_id IS NOT NULL))
+   AND r.print_status > 0
+ GROUP BY r.patient_id
+ ORDER BY pat_grp_rn]]>
+	</queryString>
+	<field name="RESEARCH_IDS" class="java.lang.String"/>
+	<field name="IS_PRINT_ENG" class="java.lang.Integer"/>
+	<variable name="DOCUMENTS" class="java.lang.String"/>
+	<detail>
+		<part uuid="4b131593-8606-419e-b33f-df2991f83de7">
+			<p:subreportPart xmlns:p="http://jasperreports.sourceforge.net/jasperreports/parts" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/parts http://jasperreports.sourceforge.net/xsd/parts.xsd">
+				<subreportParameter name="REPORT_CONNECTION">
+					<subreportParameterExpression><![CDATA[$P{REPORT_CONNECTION}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="ROOT_PARAMETERS_MAP">
+					<subreportParameterExpression><![CDATA[$P{REPORT_PARAMETERS_MAP}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="ROOT_REPORT_PATH">
+					<subreportParameterExpression><![CDATA[$P{ROOT_REPORT_PATH}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="RESEARCH_ID">
+					<subreportParameterExpression><![CDATA[$F{RESEARCH_IDS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PRINT_STAMPS">
+					<subreportParameterExpression><![CDATA[$P{PRINT_STAMPS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<returnValue subreportVariable="DOCS_PATIENT" toVariable="DOCUMENTS"/>
+				<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/template.jasper"]]></subreportExpression>
+			</p:subreportPart>
+		</part>
+		<part uuid="4b131593-8606-419e-b33f-df2991f83de7">
+			<printWhenExpression><![CDATA[$F{IS_PRINT_ENG} == 1]]></printWhenExpression>
+			<p:subreportPart xmlns:p="http://jasperreports.sourceforge.net/jasperreports/parts" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/parts http://jasperreports.sourceforge.net/xsd/parts.xsd">
+				<subreportParameter name="REPORT_CONNECTION">
+					<subreportParameterExpression><![CDATA[$P{REPORT_CONNECTION}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="ROOT_PARAMETERS_MAP">
+					<subreportParameterExpression><![CDATA[$P{REPORT_PARAMETERS_MAP}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="ROOT_REPORT_PATH">
+					<subreportParameterExpression><![CDATA[$P{ROOT_REPORT_PATH}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="RESEARCH_ID">
+					<subreportParameterExpression><![CDATA[$F{RESEARCH_IDS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PRINT_STAMPS">
+					<subreportParameterExpression><![CDATA[$P{PRINT_STAMPS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="LANG">
+					<subreportParameterExpression><![CDATA["EN"]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/template.jasper"]]></subreportExpression>
+			</p:subreportPart>
+		</part>
+		<part uuid="d6a57f2c-c177-4d5a-88e6-f3e386b10de2">
+			<printWhenExpression><![CDATA[$V{DOCUMENTS} != null]]></printWhenExpression>
+			<p:subreportPart xmlns:p="http://jasperreports.sourceforge.net/jasperreports/parts" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/parts http://jasperreports.sourceforge.net/xsd/parts.xsd">
+				<subreportParameter name="REPORT_CONNECTION">
+					<subreportParameterExpression><![CDATA[$P{REPORT_CONNECTION}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DOCUMENTS">
+					<subreportParameterExpression><![CDATA[$V{DOCUMENTS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/attaches.jasper"]]></subreportExpression>
+			</p:subreportPart>
+		</part>
+	</detail>
+</jasperReport>

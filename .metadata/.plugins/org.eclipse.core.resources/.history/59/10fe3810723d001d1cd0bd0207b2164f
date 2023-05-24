@@ -1,0 +1,504 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.2.0.final using JasperReports Library version 6.2.0  -->
+<!-- 2022-09-26T12:53:32 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="template" pageWidth="595" pageHeight="842" columnWidth="550" leftMargin="25" rightMargin="20" topMargin="15" bottomMargin="15" uuid="55f2a5fb-b675-4a67-bb7c-c6e13794d7dc">
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<style name="Table_TH" mode="Opaque" backcolor="#F0F8FF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table_TD" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table_CH" mode="Opaque" backcolor="#BFE1FF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<subDataset name="executors" uuid="b3f7d0a1-4e54-4547-9189-3478f852e3fe">
+		<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+		<parameter name="EXECUTORS" class="java.lang.String"/>
+		<parameter name="LANG" class="java.lang.String"/>
+		<queryString language="plsql">
+			<![CDATA[SELECT med.fn_translate_text('Исполнители', $P{LANG})                  AS executors_title
+     , string_agg(med.fn_translate_name(column_value, $P{LANG}), ', ') AS executors
+  FROM unnest(string_to_array($P{EXECUTORS}, ',')) column_value]]>
+		</queryString>
+		<field name="EXECUTORS_TITLE" class="java.lang.String"/>
+		<field name="EXECUTORS" class="java.lang.String"/>
+	</subDataset>
+	<subDataset name="images" uuid="e0ca2e8b-5ffd-4173-9cda-99259184564f">
+		<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+		<parameter name="IMAGES" class="java.lang.String"/>
+		<parameter name="LANG" class="java.lang.String"/>
+		<queryString language="plsql">
+			<![CDATA[WITH tab AS (
+    SELECT row_number() OVER () AS rn
+         , column_value
+      FROM unnest(string_to_array($P{IMAGES}, ',')::BIGINT[]) column_value
+  )
+SELECT med.fn_translate_text(wr.text, $P{LANG}) AS name
+     , l.image                                  AS data
+  FROM tab t
+  JOIN data.lab_result_image l ON l.id = t.column_value
+  JOIN lab.result_value rv ON rv.id = l.result_value_id
+  JOIN lab.workresult_value wrv ON wrv.id = rv.workresult_value_id
+  JOIN lab.workresult wr ON wr.id = wrv.workresult_id
+ ORDER BY rn]]>
+		</queryString>
+		<field name="NAME" class="java.lang.String"/>
+		<field name="DATA" class="java.awt.Image"/>
+	</subDataset>
+	<parameter name="ROOT_PARAMETERS_MAP" class="java.util.Map"/>
+	<parameter name="ROOT_REPORT_PATH" class="java.lang.String"/>
+	<parameter name="RESEARCH_ID" class="java.lang.String"/>
+	<parameter name="PRINT_STAMPS" class="java.lang.String">
+		<parameterDescription><![CDATA[Печать факсимиле, штампов]]></parameterDescription>
+	</parameter>
+	<parameter name="LANG" class="java.lang.String"/>
+	<queryString language="plsql">
+		<![CDATA[WITH tab AS (
+    SELECT row_number() OVER () AS rn
+         , column_value
+      FROM unnest(string_to_array($P{RESEARCH_ID}, ',')::BIGINT[]) column_value
+  )
+SELECT DISTINCT
+       med.fn_translate_text(
+           coalesce(printtext, text, 'Клинико-диагностическая лаборатория')
+         , $P{LANG})                                               AS lpu
+     , substr(r.ids, 1, 1)                                         AS lab
+     , med.fn_translate_text('Напечатано в ЛИС Ариадна', $P{LANG}) AS printed_by_title
+     , r.patient_id
+     , r.root_id                                                   AS research_id
+     , r.id                                                        AS specimen_id
+     , (SELECT count(distinct 1)
+          FROM lab.order_info oi
+          JOIN lab.mbio_result mr ON mr.order_info_id = oi.id
+         WHERE oi.research_id = r.id)                              AS is_mbio
+     , min(t.rn) OVER (PARTITION BY r.root_id ORDER BY t.rn)       AS root_grp_rn
+     , t.rn
+  FROM lab.research r
+  JOIN tab t ON r.id = t.column_value
+  LEFT JOIN med.v_this_lpu_data ON TRUE
+ WHERE r.print_status > 0
+ ORDER BY root_grp_rn, rn]]>
+	</queryString>
+	<field name="LPU" class="java.lang.String"/>
+	<field name="LAB" class="java.lang.String"/>
+	<field name="PATIENT_ID" class="java.lang.String"/>
+	<field name="RESEARCH_ID" class="java.lang.String"/>
+	<field name="SPECIMEN_ID" class="java.lang.String"/>
+	<field name="IS_MBIO" class="java.lang.Integer"/>
+	<field name="PRINTED_BY_TITLE" class="java.lang.String"/>
+	<variable name="CURRENT_DATE" class="java.lang.String">
+		<variableExpression><![CDATA[new SimpleDateFormat("dd.MM.yyyy HH:mm:ss").format(new java.util.Date())]]></variableExpression>
+	</variable>
+	<variable name="CURRENT_PAGE_NUMBER" class="java.lang.Integer">
+		<variableExpression><![CDATA[$V{CURRENT_PAGE_NUMBER} != null ? $V{CURRENT_PAGE_NUMBER} + 1 : 1]]></variableExpression>
+		<initialValueExpression><![CDATA[0]]></initialValueExpression>
+	</variable>
+	<variable name="EXECUTORS" class="java.lang.String"/>
+	<variable name="VERIFIERS" class="java.lang.String"/>
+	<variable name="EVERIFIERS" class="java.lang.String"/>
+	<variable name="DOCS" class="java.lang.String"/>
+	<variable name="IMAGES" class="java.lang.String"/>
+	<variable name="VERIFIERS_PATIENT" class="java.lang.String" resetType="Group" resetGroup="PATIENT">
+		<variableExpression><![CDATA[$V{VERIFIERS_PATIENT}]]></variableExpression>
+	</variable>
+	<variable name="DOCS_PATIENT" class="java.lang.String" resetType="Group" resetGroup="PATIENT">
+		<variableExpression><![CDATA[$V{DOCS_PATIENT}]]></variableExpression>
+	</variable>
+	<group name="PATIENT" isStartNewPage="true" isResetPageNumber="true" isReprintHeaderOnEachPage="true" minHeightToStartNewPage="154" footerPosition="StackAtBottom">
+		<groupExpression><![CDATA[$F{PATIENT_ID}]]></groupExpression>
+		<groupHeader>
+			<band height="14" splitType="Prevent">
+				<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				<image vAlign="Middle" onErrorType="Blank">
+					<reportElement x="3" y="1" width="12" height="12" isPrintInFirstWholeBand="true" uuid="42ff39fe-27dc-491c-913b-eb6a90fd2412">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<imageExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/../static/address-card.png"]]></imageExpression>
+				</image>
+				<subreport>
+					<reportElement x="20" y="0" width="530" height="14" isRemoveLineWhenBlank="true" isPrintInFirstWholeBand="true" uuid="c7c94097-9c05-4d50-a889-13f7ebc27107">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<parametersMapExpression><![CDATA[$P{REPORT_PARAMETERS_MAP}]]></parametersMapExpression>
+					<subreportParameter name="PATIENT_ID">
+						<subreportParameterExpression><![CDATA[$F{PATIENT_ID}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/patient.jasper"]]></subreportExpression>
+				</subreport>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band splitType="Prevent">
+				<printWhenExpression><![CDATA[EQUALS($P{PRINT_STAMPS},"1")]]></printWhenExpression>
+				<subreport overflowType="Stretch">
+					<reportElement isPrintRepeatedValues="false" x="10" y="0" width="360" height="0" isRemoveLineWhenBlank="true" uuid="b73b43d6-19e4-44ad-98bb-aa8bbbcf38d7">
+						<printWhenExpression><![CDATA[$V{VERIFIERS_PATIENT} != null]]></printWhenExpression>
+					</reportElement>
+					<parametersMapExpression><![CDATA[$P{REPORT_PARAMETERS_MAP}]]></parametersMapExpression>
+					<subreportParameter name="VERIFIERS">
+						<subreportParameterExpression><![CDATA[$V{VERIFIERS_PATIENT}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/signatures.jasper"]]></subreportExpression>
+				</subreport>
+				<subreport overflowType="Stretch">
+					<reportElement isPrintRepeatedValues="false" x="420" y="0" width="100" height="0" isRemoveLineWhenBlank="true" uuid="cae5901c-cbb2-4b05-91a3-5847cf7e8255">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<printWhenExpression><![CDATA[EQUALS(LEFT(TRIM($P{ROOT_REPORT_PATH}),4), "http") ?
+  ((HttpURLConnection)(new URL($P{ROOT_REPORT_PATH}.replace("\\", "/") + "/../static/stamp.png")).openConnection()).getResponseCode() == 200
+:  new File($P{ROOT_REPORT_PATH} + "/../static/stamp.png").exists()]]></printWhenExpression>
+					</reportElement>
+					<parametersMapExpression><![CDATA[$P{REPORT_PARAMETERS_MAP}]]></parametersMapExpression>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/stamp.jasper"]]></subreportExpression>
+				</subreport>
+			</band>
+		</groupFooter>
+	</group>
+	<group name="RESEARCH" minHeightToStartNewPage="140">
+		<groupExpression><![CDATA[$F{RESEARCH_ID}]]></groupExpression>
+		<groupHeader>
+			<band height="14" splitType="Prevent">
+				<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				<image vAlign="Middle" onErrorType="Blank">
+					<reportElement x="3" y="1" width="12" height="12" isPrintInFirstWholeBand="true" uuid="7237ae6f-543c-42a5-ab3e-6e790fcdd7b7">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
+					<imageExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/../static/file-alt.png"]]></imageExpression>
+				</image>
+				<subreport>
+					<reportElement x="20" y="0" width="530" height="14" isRemoveLineWhenBlank="true" isPrintInFirstWholeBand="true" uuid="f730ae88-eb20-4ca1-bf0f-ad03b10e9224">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					</reportElement>
+					<parametersMapExpression><![CDATA[$P{REPORT_PARAMETERS_MAP}]]></parametersMapExpression>
+					<subreportParameter name="RESEARCH_ID">
+						<subreportParameterExpression><![CDATA[$F{RESEARCH_ID}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/research.jasper"]]></subreportExpression>
+				</subreport>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band splitType="Prevent">
+				<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			</band>
+		</groupFooter>
+	</group>
+	<group name="SPECIMEN" minHeightToStartNewPage="88">
+		<groupExpression><![CDATA[$F{SPECIMEN_ID}]]></groupExpression>
+		<groupHeader>
+			<band height="14" splitType="Prevent">
+				<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				<image vAlign="Middle" onErrorType="Blank">
+					<reportElement x="3" y="1" width="12" height="12" isPrintInFirstWholeBand="true" uuid="1e32e228-7f79-4b11-85fb-6099d2b52a01">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
+					<imageExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/../static/vial.png"]]></imageExpression>
+				</image>
+				<subreport>
+					<reportElement x="20" y="0" width="530" height="14" isRemoveLineWhenBlank="true" isPrintInFirstWholeBand="true" uuid="690536b6-8f2a-4e08-a35c-12722d95b7e9">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					</reportElement>
+					<parametersMapExpression><![CDATA[$P{REPORT_PARAMETERS_MAP}]]></parametersMapExpression>
+					<subreportParameter name="RESEARCH_ID">
+						<subreportParameterExpression><![CDATA[$F{SPECIMEN_ID}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/specimen.jasper"]]></subreportExpression>
+				</subreport>
+				<returnValue toVariable="VERIFIERS_PATIENT">
+					<expression><![CDATA[$V{VERIFIERS_PATIENT} == null ? $V{VERIFIERS}
+: $V{VERIFIERS_PATIENT} + ($V{VERIFIERS} == null ? "" : ", " + $V{VERIFIERS})]]></expression>
+				</returnValue>
+				<returnValue toVariable="DOCS_PATIENT">
+					<expression><![CDATA[$V{DOCS_PATIENT} == null ? $V{DOCS}
+: $V{DOCS_PATIENT} + ($V{DOCS} == null ? "" : ", " + $V{DOCS})]]></expression>
+				</returnValue>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band splitType="Prevent"/>
+		</groupFooter>
+	</group>
+	<pageHeader>
+		<band height="80" splitType="Prevent">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<staticText>
+				<reportElement x="0" y="0" width="550" height="30" uuid="675dad7a-c806-4146-8f84-85dc87c98e4a">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font fontName="DejaVu Sans" size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ГАУЗ "ООКБ №2"
+Клинико-диагностическая лаборатория]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="30" width="550" height="50" uuid="30ac7fa7-7a97-4aea-bc77-6dca3ccf1693">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<printWhenExpression><![CDATA[1==0
+]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font fontName="DejaVu Sans"/>
+				</textElement>
+				<text><![CDATA[460961, г. Оренбург, ул. Невельская, 24
+тел: (3532) 31-04-74 приемная
+ИНН 5611087244 КПП 561101001
+эл. почта: oob04@mail.orb.ru]]></text>
+			</staticText>
+		</band>
+	</pageHeader>
+	<detail>
+		<band splitType="Stretch">
+			<printWhenExpression><![CDATA[$F{IS_MBIO} == 0]]></printWhenExpression>
+			<frame>
+				<reportElement x="0" y="0" width="550" height="0" uuid="e9b59265-3f24-46e2-93b1-056788437ca2"/>
+				<box>
+					<topPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.6" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<subreport overflowType="Stretch">
+					<reportElement x="0" y="0" width="550" height="0" isRemoveLineWhenBlank="true" isPrintInFirstWholeBand="true" uuid="7025a46a-fd2b-4fd7-ba4e-715b904cbf43">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<parametersMapExpression><![CDATA[$P{REPORT_PARAMETERS_MAP}]]></parametersMapExpression>
+					<subreportParameter name="RESEARCH_ID">
+						<subreportParameterExpression><![CDATA[$F{SPECIMEN_ID}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<returnValue subreportVariable="EXECUTORS_DISTINCT" toVariable="EXECUTORS"/>
+					<returnValue subreportVariable="VERIFIERS_DISTINCT" toVariable="VERIFIERS"/>
+					<returnValue subreportVariable="EVERIFIERS_DISTINCT" toVariable="EVERIFIERS"/>
+					<returnValue subreportVariable="DOCS" toVariable="DOCS"/>
+					<returnValue subreportVariable="IMAGES" toVariable="IMAGES"/>
+					<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH}+"/results.jasper"]]></subreportExpression>
+				</subreport>
+			</frame>
+			<returnValue toVariable="VERIFIERS_PATIENT">
+				<expression><![CDATA[$V{VERIFIERS_PATIENT} == null ? $V{VERIFIERS}
+: $V{VERIFIERS_PATIENT} + ($V{VERIFIERS} == null ? "" : ", " + $V{VERIFIERS})]]></expression>
+			</returnValue>
+			<returnValue toVariable="DOCS_PATIENT">
+				<expression><![CDATA[$V{DOCS_PATIENT} == null ? $V{DOCS}
+: $V{DOCS_PATIENT} + ($V{DOCS} == null ? "" : ", " + $V{DOCS})]]></expression>
+			</returnValue>
+		</band>
+		<band splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<printWhenExpression><![CDATA[$F{IS_MBIO} == 1]]></printWhenExpression>
+			<subreport overflowType="Stretch">
+				<reportElement key="" x="0" y="0" width="550" height="0" isRemoveLineWhenBlank="true" isPrintInFirstWholeBand="true" uuid="29bf84d1-a00c-4cfa-9504-5ee31395021f"/>
+				<parametersMapExpression><![CDATA[$P{REPORT_PARAMETERS_MAP}]]></parametersMapExpression>
+				<subreportParameter name="RESEARCH_ID">
+					<subreportParameterExpression><![CDATA[$F{SPECIMEN_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<returnValue subreportVariable="EXECUTORS_DISTINCT" toVariable="EXECUTORS"/>
+				<returnValue subreportVariable="VERIFIERS_DISTINCT" toVariable="VERIFIERS"/>
+				<returnValue subreportVariable="EVERIFIERS_DISTINCT" toVariable="EVERIFIERS"/>
+				<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH}+"/results_mbio.jasper"]]></subreportExpression>
+			</subreport>
+			<returnValue toVariable="VERIFIERS_PATIENT">
+				<expression><![CDATA[$V{VERIFIERS_PATIENT} == null ? $V{VERIFIERS}
+: $V{VERIFIERS_PATIENT} + ($V{VERIFIERS} == null ? "" : ", " + $V{VERIFIERS})]]></expression>
+			</returnValue>
+		</band>
+		<band height="100" splitType="Stretch">
+			<printWhenExpression><![CDATA[$V{IMAGES} != null]]></printWhenExpression>
+			<componentElement>
+				<reportElement x="0" y="0" width="550" height="100" isRemoveLineWhenBlank="true" uuid="be114720-80f5-40c1-b9b2-7111d800233f">
+					<property name="net.sf.jasperreports.export.headertoolbar.table.name" value="IMAGES"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<jr:list xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" printOrder="Horizontal">
+					<datasetRun subDataset="images" uuid="befa9a80-89f7-480d-8e9a-e47f4863ec2d">
+						<parametersMapExpression><![CDATA[$P{REPORT_PARAMETERS_MAP}]]></parametersMapExpression>
+						<datasetParameter name="ORACLE_REF_CURSOR">
+							<datasetParameterExpression><![CDATA[$P{ORACLE_REF_CURSOR}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="IMAGES">
+							<datasetParameterExpression><![CDATA[$V{IMAGES}]]></datasetParameterExpression>
+						</datasetParameter>
+						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					</datasetRun>
+					<jr:listContents height="100" width="550">
+						<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+							<reportElement key="" positionType="Float" stretchType="RelativeToTallestObject" x="0" y="5" width="80" height="95" isRemoveLineWhenBlank="true" uuid="d838621d-30ac-4f55-a7a6-b833e75e925a">
+								<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+								<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+							</reportElement>
+							<textElement textAlignment="Center" verticalAlignment="Bottom" rotation="Left" markup="html">
+								<font fontName="DejaVu Sans" size="9" isBold="true" isItalic="true" isUnderline="false"/>
+							</textElement>
+							<textFieldExpression><![CDATA[$F{NAME}]]></textFieldExpression>
+						</textField>
+						<image scaleImage="RealSize" hAlign="Left" vAlign="Middle">
+							<reportElement stretchType="RelativeToTallestObject" x="80" y="5" width="390" height="95" isRemoveLineWhenBlank="true" uuid="6bae4161-634c-4457-8c13-275874617cc8">
+								<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+							</reportElement>
+							<imageExpression><![CDATA[$F{DATA}]]></imageExpression>
+						</image>
+					</jr:listContents>
+				</jr:list>
+			</componentElement>
+		</band>
+		<band height="14" splitType="Prevent">
+			<printWhenExpression><![CDATA[$V{EVERIFIERS} != null]]></printWhenExpression>
+			<componentElement>
+				<reportElement x="0" y="0" width="550" height="14" uuid="51e1127f-cdfa-4ee6-a42f-705b0ec8b4df">
+					<property name="net.sf.jasperreports.export.headertoolbar.table.name" value="executors"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<jr:list xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" printOrder="Vertical">
+					<datasetRun subDataset="executors" uuid="c916ca96-b493-4a6a-8d8b-db5ee5ef5c56">
+						<parametersMapExpression><![CDATA[$P{REPORT_PARAMETERS_MAP}]]></parametersMapExpression>
+						<datasetParameter name="ORACLE_REF_CURSOR">
+							<datasetParameterExpression><![CDATA[$P{ORACLE_REF_CURSOR}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="EXECUTORS">
+							<datasetParameterExpression><![CDATA[$V{EVERIFIERS}]]></datasetParameterExpression>
+						</datasetParameter>
+						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					</datasetRun>
+					<jr:listContents height="14" width="550">
+						<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+							<reportElement x="80" y="0" width="470" height="14" uuid="fafb9cbd-6ed5-4ad9-82fe-cb49d3fa29e9">
+								<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+							</reportElement>
+							<box topPadding="1" leftPadding="1" bottomPadding="1" rightPadding="1"/>
+							<textElement verticalAlignment="Middle">
+								<font fontName="DejaVu Sans"/>
+							</textElement>
+							<textFieldExpression><![CDATA[$F{EXECUTORS}]]></textFieldExpression>
+						</textField>
+						<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+							<reportElement x="0" y="0" width="80" height="14" uuid="166e1092-24e9-43bc-aa29-8ef0c46fb6c0">
+								<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+							</reportElement>
+							<box topPadding="1" leftPadding="1" bottomPadding="1" rightPadding="1"/>
+							<textElement verticalAlignment="Middle">
+								<font fontName="DejaVu Sans"/>
+							</textElement>
+							<textFieldExpression><![CDATA[$F{EXECUTORS_TITLE} + ":"]]></textFieldExpression>
+						</textField>
+					</jr:listContents>
+				</jr:list>
+			</componentElement>
+		</band>
+		<band splitType="Prevent">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<printWhenExpression><![CDATA[false]]></printWhenExpression>
+			<subreport>
+				<reportElement x="0" y="0" width="550" height="0" isRemoveLineWhenBlank="true" uuid="e0bd1e2c-10cf-48bb-a84e-872a37de8d88">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<parametersMapExpression><![CDATA[$P{ROOT_PARAMETERS_MAP}]]></parametersMapExpression>
+				<subreportParameter name="RESEARCH_ID">
+					<subreportParameterExpression><![CDATA[$F{SPECIMEN_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/eds.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band splitType="Prevent">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<printWhenExpression><![CDATA[false]]></printWhenExpression>
+			<subreport>
+				<reportElement x="0" y="0" width="550" height="0" isRemoveLineWhenBlank="true" uuid="1b1fefca-9463-4321-bb65-52fade731b2e">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<subreportParameter name="RESEARCH_ID">
+					<subreportParameterExpression><![CDATA[$F{SPECIMEN_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="LANG">
+					<subreportParameterExpression><![CDATA[$P{LANG}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression><![CDATA[$P{ROOT_REPORT_PATH}+"/ordservices.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="12" splitType="Prevent">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField evaluationTime="Auto" pattern="">
+				<reportElement positionType="FixRelativeToBottom" mode="Opaque" x="0" y="0" width="400" height="12" uuid="542e37c9-3b58-45fd-90bc-9c33a8a31c34">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<printWhenExpression><![CDATA[true]]></printWhenExpression>
+				</reportElement>
+				<box topPadding="1" leftPadding="1" bottomPadding="1" rightPadding="1">
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement verticalAlignment="Bottom">
+					<font fontName="DejaVu Sans" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{PRINTED_BY_TITLE} + ": " + $V{CURRENT_DATE}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Page">
+				<reportElement positionType="FixRelativeToBottom" mode="Opaque" x="400" y="0" width="120" height="12" uuid="d48c03a2-3ac5-41ea-8131-567de9673c23">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<printWhenExpression><![CDATA[true]]></printWhenExpression>
+				</reportElement>
+				<box topPadding="1" leftPadding="1" bottomPadding="1" rightPadding="1"/>
+				<textElement textAlignment="Right" verticalAlignment="Bottom">
+					<font fontName="DejaVu Sans" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA["p. " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Group" evaluationGroup="PATIENT">
+				<reportElement positionType="FixRelativeToBottom" mode="Opaque" x="520" y="0" width="30" height="12" uuid="67028935-4b3e-4e84-b815-f8751e55756f">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[true]]></printWhenExpression>
+				</reportElement>
+				<box topPadding="1" leftPadding="1" bottomPadding="1" rightPadding="1"/>
+				<textElement textAlignment="Left" verticalAlignment="Bottom">
+					<font fontName="DejaVu Sans" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[" of " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+</jasperReport>

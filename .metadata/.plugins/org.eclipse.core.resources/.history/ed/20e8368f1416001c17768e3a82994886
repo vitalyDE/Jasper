@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.2.0.final using JasperReports Library version 6.2.0  -->
+<!-- 2021-09-15T16:03:29 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="signatures" columnCount="3" printOrder="Horizontal" pageWidth="330" pageHeight="842" whenNoDataType="BlankPage" columnWidth="109" columnSpacing="1" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="1441f28b-7d07-4345-9ab0-29ec37bc3a8e">
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<parameter name="ROOT_REPORT_PATH" class="java.lang.String"/>
+	<parameter name="VERIFIERS" class="java.lang.String"/>
+	<queryString language="plsql">
+		<![CDATA[with t as (select $P{VERIFIERS} as str from dual)
+select trim(replace(column_value, '  ', ' ')) as fio
+  from table(select p_collections.string_to_table_of_strings(t.str) from t)]]>
+	</queryString>
+	<field name="FIO" class="java.lang.String"/>
+	<filterExpression><![CDATA[new File($P{ROOT_REPORT_PATH} + "/" + $F{FIO} + ".png").exists() == true]]></filterExpression>
+	<detail>
+		<band height="50" splitType="Prevent">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="0" y="0" width="108" height="12" isRemoveLineWhenBlank="true" uuid="58d94831-c4f9-4084-b797-ea93082308f6">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box padding="0"/>
+				<textElement verticalAlignment="Top">
+					<font fontName="DejaVu Sans" size="10"/>
+					<paragraph leftIndent="0" rightIndent="0" spacingBefore="0"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{FIO}]]></textFieldExpression>
+			</textField>
+			<image scaleImage="RetainShape" vAlign="Top" onErrorType="Blank">
+				<reportElement positionType="Float" x="0" y="12" width="108" height="38" isRemoveLineWhenBlank="true" uuid="7e2c2f92-36fc-4f3c-a78e-105d44436909">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box padding="0"/>
+				<imageExpression><![CDATA[$P{ROOT_REPORT_PATH} + "/" + $F{FIO} + ".png"]]></imageExpression>
+			</image>
+		</band>
+	</detail>
+</jasperReport>
